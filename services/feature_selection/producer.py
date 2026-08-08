@@ -1,25 +1,34 @@
 import json
+
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
-from kafka.serializer import Serializer
 
 from config import (
-    BOOTSTRAP_SERVER, OUTPUT_TOPIC, CLIENT_ID, ACKS, MAX_RETRIES,
-    COMPRESSION_TYPE, KAFKA_BATCH_SIZE, LINGER_MS, MAX_IN_FLIGHT,
-    BUFFER_MEMORY, REQUEST_TIMEOUT_MS, DELIVERY_TIMEOUT_MS,
-    MAX_BLOCK_MS, RETRY_BACKOFF_MS, PRINT_STATS_EVERY
+    BOOTSTRAP_SERVER,
+    OUTPUT_TOPIC,
+    CLIENT_ID,
+    ACKS,
+    MAX_RETRIES,
+    COMPRESSION_TYPE,
+    KAFKA_BATCH_SIZE,
+    LINGER_MS,
+    MAX_IN_FLIGHT,
+    REQUEST_TIMEOUT_MS,
+    DELIVERY_TIMEOUT_MS,
+    MAX_BLOCK_MS,
+    RETRY_BACKOFF_MS,
+    PRINT_STATS_EVERY
 )
+
 from logger import IDSLogger
 
-class JSONSerializer(Serializer):
-    def serialize(self, topic, value):
-        if value is None:
-            return None
-        return json.dumps(value).encode("utf-8")
 
 class FeatureSelectionProducer:
+
     def __init__(self):
+
         self.logger = IDSLogger().get_logger()
+
         self.sent_records = 0
         self.success_records = 0
         self.failed_records = 0
@@ -36,58 +45,148 @@ class FeatureSelectionProducer:
             "delivery_timeout_ms": DELIVERY_TIMEOUT_MS,
             "max_block_ms": MAX_BLOCK_MS,
             "max_in_flight_requests_per_connection": MAX_IN_FLIGHT,
-            "value_serializer": JSONSerializer(),
-        }
 
-        if "buffer_memory" in KafkaProducer.DEFAULT_CONFIG:
-            producer_config["buffer_memory"] = BUFFER_MEMORY
+            "value_serializer": lambda value:
+                json.dumps(value).encode("utf-8")
+        }
 
         if COMPRESSION_TYPE:
             producer_config["compression_type"] = COMPRESSION_TYPE
 
-        self.producer = KafkaProducer(**producer_config)
+        self.producer = KafkaProducer(
+            **producer_config
+        )
+
         self.logger.info("=" * 70)
-        self.logger.info(f"Connected to Kafka Topic : {OUTPUT_TOPIC}")
-        self.logger.info("Kafka Producer Started Successfully")
+
+        self.logger.info(
+            f"Connected to Kafka Topic : {OUTPUT_TOPIC}"
+        )
+
+        self.logger.info(
+            "Kafka Producer Started Successfully"
+        )
+
         self.logger.info("=" * 70)
+
+    # ==========================================================
+    # Send
+    # ==========================================================
 
     def send(self, record):
+
         try:
-            future = self.producer.send(OUTPUT_TOPIC, value=record)
-            future.add_callback(self._delivery_success)
-            future.add_errback(self._delivery_error)
+
+            future = self.producer.send(
+                OUTPUT_TOPIC,
+                value=record
+            )
+
+            future.add_callback(
+                self._delivery_success
+            )
+
+            future.add_errback(
+                self._delivery_error
+            )
+
             self.sent_records += 1
 
-            if self.sent_records % PRINT_STATS_EVERY == 0:
-                self.producer.flush(timeout=30)
-                self.logger.info(f"Sent Records : {self.sent_records:,}")
-        except Exception as e:
+            if (
+                self.sent_records
+                % PRINT_STATS_EVERY
+                == 0
+            ):
+
+                self.logger.info(
+                    f"Queued Records : "
+                    f"{self.sent_records:,}"
+                )
+
+        except Exception as error:
+
             self.failed_records += 1
-            self.logger.exception(f"Producer Error : {e}")
+
+            self.logger.exception(
+                f"Producer Error : {error}"
+            )
+
+    # ==========================================================
+    # Delivery Success
+    # ==========================================================
 
     def _delivery_success(self, metadata):
+
         self.success_records += 1
 
-    def _delivery_error(self, exc):
+    # ==========================================================
+    # Delivery Error
+    # ==========================================================
+
+    def _delivery_error(self, exception):
+
         self.failed_records += 1
-        self.logger.error(f"Kafka Delivery Failed : {exc}")
+
+        self.logger.error(
+            f"Kafka Delivery Failed : "
+            f"{exception}"
+        )
+
+    # ==========================================================
+    # Flush
+    # ==========================================================
 
     def flush(self):
+
         try:
-            self.producer.flush(timeout=30)
-        except KafkaError as e:
-            self.logger.exception(f"Flush Error : {e}")
+
+            self.producer.flush(
+                timeout=30
+            )
+
+        except KafkaError as error:
+
+            self.logger.exception(
+                f"Flush Error : {error}"
+            )
+
+    # ==========================================================
+    # Close
+    # ==========================================================
 
     def close(self):
+
         try:
+
             self.flush()
+
         finally:
-            self.producer.close(timeout=30)
+
+            self.producer.close(
+                timeout=30
+            )
 
         self.logger.info("=" * 70)
-        self.logger.info("PRODUCER SUMMARY")
+
+        self.logger.info(
+            "PRODUCER SUMMARY"
+        )
+
         self.logger.info("=" * 70)
-        self.logger.info(f"Queued Records     : {self.sent_records:,}")
-        self.logger.info(f"Delivered Records  : {self.success_records:,}")
-        self.logger.info(f"Failed Records     : {self.failed_records:,}")
+
+        self.logger.info(
+            f"Queued Records     : "
+            f"{self.sent_records:,}"
+        )
+
+        self.logger.info(
+            f"Delivered Records  : "
+            f"{self.success_records:,}"
+        )
+
+        self.logger.info(
+            f"Failed Records     : "
+            f"{self.failed_records:,}"
+        )
+
         self.logger.info("=" * 70)

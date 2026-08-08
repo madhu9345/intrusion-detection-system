@@ -1,6 +1,4 @@
 """
-kafka_producer.py
------------------
 Enterprise Kafka Producer
 Compatible with kafka-python 2.2.15
 """
@@ -20,7 +18,6 @@ from config import (
     BATCH_SIZE,
     LINGER_MS,
     MAX_IN_FLIGHT,
-    BUFFER_MEMORY,
     REQUEST_TIMEOUT_MS,
     DELIVERY_TIMEOUT_MS,
     MAX_BLOCK_MS,
@@ -57,8 +54,6 @@ class PreprocessingProducer:
 
             "linger_ms": LINGER_MS,
 
-            "buffer_memory": BUFFER_MEMORY,
-
             "request_timeout_ms": REQUEST_TIMEOUT_MS,
 
             "delivery_timeout_ms": DELIVERY_TIMEOUT_MS,
@@ -67,11 +62,10 @@ class PreprocessingProducer:
 
             "max_in_flight_requests_per_connection": MAX_IN_FLIGHT,
 
+            "compression_type": COMPRESSION_TYPE,
+
             "value_serializer": lambda x: json.dumps(x).encode("utf-8"),
         }
-
-        if COMPRESSION_TYPE:
-            producer_config["compression_type"] = COMPRESSION_TYPE
 
         self.producer = KafkaProducer(**producer_config)
 
@@ -81,7 +75,7 @@ class PreprocessingProducer:
         self.logger.info("=" * 70)
 
     # ==========================================================
-    # Send
+    # Send Record
     # ==========================================================
 
     def send(self, record):
@@ -98,7 +92,6 @@ class PreprocessingProducer:
 
             self.sent_records += 1
 
-            # Flush periodically
             if self.sent_records % PRINT_STATS_EVERY == 0:
 
                 self.producer.flush(timeout=30)
@@ -116,7 +109,7 @@ class PreprocessingProducer:
             )
 
     # ==========================================================
-    # Success Callback
+    # Delivery Success
     # ==========================================================
 
     def _delivery_success(self, metadata):
@@ -124,7 +117,7 @@ class PreprocessingProducer:
         self.success_records += 1
 
     # ==========================================================
-    # Error Callback
+    # Delivery Failure
     # ==========================================================
 
     def _delivery_error(self, exc):
@@ -158,11 +151,9 @@ class PreprocessingProducer:
     def close(self):
 
         try:
-
             self.flush()
 
         finally:
-
             self.producer.close(timeout=30)
 
         self.logger.info("=" * 70)
