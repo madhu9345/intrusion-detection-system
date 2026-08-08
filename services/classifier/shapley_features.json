@@ -1,0 +1,18 @@
+[
+    "Down/Up Ratio",
+    "flow_packets_per_sec",
+    "flow_duration",
+    "Bwd Pkt Len Max",
+    "Fwd IAT Min",
+    "Fwd Pkt Len Max",
+    "Bwd IAT Min",
+    "Idle Mean",
+    "Init Bwd Win Byts",
+    "Init Fwd Win Byts",
+    "Pkt Size Avg",
+    "total_forward_packets",
+    "RST Flag Cnt",
+    "Fwd IAT Std",
+    "Bwd Header Len",
+    "Active Min"
+]

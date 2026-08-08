@@ -1798,9 +1798,12 @@ print(f"\nLocation : {DESTINATION_FOLDER}")
 ====================================================
 File: C:\IDS\docker\docker-compose.yml
 ====================================================
+version: "3.9"
+
 services:
+
   kafka:
-    image: apache/kafka:latest
+    image: apache/kafka:3.9.1
     container_name: kafka
     hostname: kafka
 
@@ -1821,167 +1824,1740 @@ services:
 
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
+      # Single-node Kafka settings
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # Automatically create topics (development only)
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
     volumes:
       - kafka-data:/var/lib/kafka/data
+
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
+
     ports:
       - "8080:8080"
+
     depends_on:
       - kafka
+
     environment:
       KAFKA_CLUSTERS_0_NAME: Local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+    restart: unless-stopped
+
+  feature-selection:
+    build:
+      context: ../services/feature_selection
+
+    container_name: feature-selection
+
+    depends_on:
+      - kafka
+
+    restart: unless-stopped
+
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      INPUT_TOPIC: clean-traffic
+      OUTPUT_TOPIC: selected-features
+      GROUP_ID: feature-selection-group
 
 volumes:
   kafka-data:
 
 ====================================================
-File: C:\IDS\services\ingestion\checkpoint.py
+File: C:\IDS\services\feature_selection\causal_effect.py
 ====================================================
-"""
-checkpoint.py
--------------
-Enterprise Checkpoint Manager
-
-Features
---------
-✓ Automatic checkpoint creation
-✓ Safe loading
-✓ Atomic writes
-✓ Corruption recovery
-✓ Reset support
-"""
-
-import json
-import tempfile
-from pathlib import Path
-from datetime import datetime
+import numpy as np
 
 from config import (
-    CHECKPOINT_FOLDER,
-    CHECKPOINT_FILE
+    ALPHA_PERCENTILE,
+    MIN_FEATURE_SCORE
+)
+
+from logger import IDSLogger
+
+
+class CausalEffect:
+
+    def __init__(
+        self,
+        alpha_percentile=ALPHA_PERCENTILE,
+        min_score=MIN_FEATURE_SCORE,
+        epsilon=1e-12
+    ):
+
+        self.logger = IDSLogger().get_logger()
+
+        self.alpha_percentile = (
+            alpha_percentile
+        )
+
+        self.min_score = (
+            min_score
+        )
+
+        self.epsilon = float(
+            epsilon
+        )
+
+    # ==========================================================
+    # KL(P || Q)
+    # ==========================================================
+
+    def kl_divergence(
+        self,
+        p,
+        q
+    ):
+
+        keys = set(p.keys()).union(
+            q.keys()
+        )
+
+        divergence = 0.0
+
+        for key in keys:
+
+            p_value = float(
+                p.get(
+                    key,
+                    self.epsilon
+                )
+            )
+
+            q_value = float(
+                q.get(
+                    key,
+                    self.epsilon
+                )
+            )
+
+            p_value = max(
+                p_value,
+                self.epsilon
+            )
+
+            q_value = max(
+                q_value,
+                self.epsilon
+            )
+
+            divergence += (
+                p_value
+                *
+                np.log(
+                    p_value / q_value
+                )
+            )
+
+        return float(
+            max(divergence, 0.0)
+        )
+
+    # ==========================================================
+    # Eq. 13
+    # ==========================================================
+
+    def max_kl_within_cmb(
+        self,
+        per_x_distribution
+    ):
+
+        x_values = list(
+            per_x_distribution.keys()
+        )
+
+        if len(x_values) < 2:
+            return 0.0
+
+        max_divergence = 0.0
+
+        for i in range(
+            len(x_values)
+        ):
+
+            for j in range(
+                i + 1,
+                len(x_values)
+            ):
+
+                p = (
+                    per_x_distribution[
+                        x_values[i]
+                    ]
+                )
+
+                q = (
+                    per_x_distribution[
+                        x_values[j]
+                    ]
+                )
+
+                # KL is directional.
+                # Calculate both directions and
+                # retain the larger one.
+                d1 = self.kl_divergence(
+                    p,
+                    q
+                )
+
+                d2 = self.kl_divergence(
+                    q,
+                    p
+                )
+
+                divergence = max(
+                    d1,
+                    d2
+                )
+
+                if divergence > max_divergence:
+
+                    max_divergence = (
+                        divergence
+                    )
+
+        return float(
+            max_divergence
+        )
+
+    # ==========================================================
+    # Eq. 14
+    # ==========================================================
+
+    def causal_effect(
+        self,
+        conditional_distributions
+    ):
+
+        if not conditional_distributions:
+            return 0.0
+
+        max_effect = 0.0
+
+        for (
+            cmb_key,
+            per_x_distribution
+        ) in conditional_distributions.items():
+
+            dkl = self.max_kl_within_cmb(
+                per_x_distribution
+            )
+
+            max_effect = max(
+                max_effect,
+                dkl
+            )
+
+        return float(
+            max_effect
+        )
+
+    # ==========================================================
+    # Calculate CE for all features
+    # ==========================================================
+
+    def calculate(
+        self,
+        distributions_by_feature
+    ):
+
+        effects = {}
+
+        for (
+            feature,
+            distributions
+        ) in distributions_by_feature.items():
+
+            effects[feature] = (
+                self.causal_effect(
+                    distributions
+                )
+            )
+
+        self.logger.info(
+            f"Causal Effects Computed : "
+            f"{len(effects)}"
+        )
+
+        return effects
+
+    # ==========================================================
+    # Eq. 15
+    # ==========================================================
+
+    def adaptive_threshold(
+        self,
+        effects
+    ):
+
+        values = [
+            float(value)
+            for value in effects.values()
+            if np.isfinite(value)
+        ]
+
+        if not values:
+            return 0.0
+
+        threshold = float(
+            np.percentile(
+                values,
+                self.alpha_percentile
+            )
+        )
+
+        return threshold
+
+    # ==========================================================
+    # Independence
+    # ==========================================================
+
+    def independent(
+        self,
+        ce_value,
+        threshold
+    ):
+
+        # If every feature has zero effect,
+        # they are indistinguishable using
+        # the current data.
+        if threshold == 0.0:
+
+            return ce_value <= 0.0
+
+        return ce_value < threshold
+
+    # ==========================================================
+    # Test
+    # ==========================================================
+
+    def test_independence(
+        self,
+        feature,
+        effects
+    ):
+
+        threshold = (
+            self.adaptive_threshold(
+                effects
+            )
+        )
+
+        ce_value = float(
+            effects.get(
+                feature,
+                0.0
+            )
+        )
+
+        independent = (
+            self.independent(
+                ce_value,
+                threshold
+            )
+        )
+
+        return (
+            independent,
+            ce_value,
+            threshold
+        )
+
+====================================================
+File: C:\IDS\services\feature_selection\check_consume.py
+====================================================
+
+====================================================
+File: C:\IDS\services\feature_selection\preprocessor.py
+====================================================
+import numpy as np
+import pandas as pd
+
+from sklearn.cluster import KMeans
+
+from logger import IDSLogger
+from config import (
+    NUM_CLASSES,
+    RANDOM_STATE,
+    TARGET_COLUMN
 )
 
 
-class CheckpointManager:
+class Preprocessor:
 
-    def __init__(self):
-
-        CHECKPOINT_FOLDER.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        if not CHECKPOINT_FILE.exists():
-            self.reset()
-
-    # ==========================================================
-    # Save Checkpoint
-    # ==========================================================
-
-    def save(
+    def __init__(
         self,
-        file_name: str,
-        chunk: int,
-        records_sent: int
+        num_classes=NUM_CLASSES
     ):
 
-        checkpoint = {
+        self.logger = IDSLogger().get_logger()
 
-            "file": file_name,
+        self.num_classes = int(
+            num_classes
+        )
 
-            "chunk": chunk,
+    # ==========================================================
+    # Process One Feature
+    # ==========================================================
 
-            "records_sent": records_sent,
+    def process_feature(
+        self,
+        series: pd.Series
+    ) -> np.ndarray:
 
-            "timestamp": datetime.now().isoformat()
+        # ------------------------------------------------------
+        # Convert to numeric
+        # ------------------------------------------------------
 
-        }
+        values = pd.to_numeric(
+            series,
+            errors="coerce"
+        )
 
-        temp_file = CHECKPOINT_FILE.with_suffix(".tmp")
+        values = values.replace(
+            [np.inf, -np.inf],
+            np.nan
+        )
 
-        with open(
-            temp_file,
-            "w",
-            encoding="utf-8"
-        ) as f:
+        values = values.fillna(0)
 
-            json.dump(
-                checkpoint,
-                f,
-                indent=4
+        values = values.astype(
+            np.float64
+        ).values
+
+        # ------------------------------------------------------
+        # Empty feature
+        # ------------------------------------------------------
+
+        if len(values) == 0:
+
+            return np.array(
+                [],
+                dtype=np.int32
             )
 
-        temp_file.replace(CHECKPOINT_FILE)
+        # ------------------------------------------------------
+        # Constant feature
+        #
+        # K-means cannot meaningfully split a
+        # feature containing only one value.
+        # ------------------------------------------------------
 
-    # ==========================================================
-    # Load Checkpoint
-    # ==========================================================
+        if np.all(
+            values == values[0]
+        ):
 
-    def load(self):
+            return np.zeros(
+                len(values),
+                dtype=np.int32
+            )
 
-        if not CHECKPOINT_FILE.exists():
-            return None
+        # ------------------------------------------------------
+        # Remove numerical problems
+        # ------------------------------------------------------
+
+        if not np.all(
+            np.isfinite(values)
+        ):
+
+            values = np.nan_to_num(
+                values,
+                nan=0.0,
+                posinf=0.0,
+                neginf=0.0
+            )
+
+        # ------------------------------------------------------
+        # K-means
+        #
+        # Two clusters are used:
+        #
+        # Cluster 0
+        # Cluster 1
+        # ------------------------------------------------------
+
+        unique_values = np.unique(
+            values
+        )
+
+        n_clusters = min(
+            2,
+            len(unique_values)
+        )
+
+        if n_clusters < 2:
+
+            return np.zeros(
+                len(values),
+                dtype=np.int32
+            )
+
+        reshaped = values.reshape(
+            -1,
+            1
+        )
 
         try:
 
-            with open(
-                CHECKPOINT_FILE,
-                "r",
-                encoding="utf-8"
-            ) as f:
+            model = KMeans(
+                n_clusters=n_clusters,
+                random_state=RANDOM_STATE,
+                n_init=10
+            )
 
-                checkpoint = json.load(f)
+            clusters = model.fit_predict(
+                reshaped
+            )
 
-            if not checkpoint:
-                return None
+        except Exception as error:
 
-            return checkpoint
+            self.logger.warning(
+                f"K-means failed for "
+                f"feature '{series.name}': "
+                f"{error}"
+            )
 
-        except Exception:
+            return np.zeros(
+                len(values),
+                dtype=np.int32
+            )
 
-            return None
+        centers = (
+            model.cluster_centers_
+            .flatten()
+        )
+
+        # ------------------------------------------------------
+        # Identify normal cluster
+        #
+        # Cluster whose center is closest
+        # to the overall mean.
+        # ------------------------------------------------------
+
+        overall_mean = float(
+            np.mean(values)
+        )
+
+        normal_cluster = int(
+            np.argmin(
+                np.abs(
+                    centers -
+                    overall_mean
+                )
+            )
+        )
+
+        # ------------------------------------------------------
+        # Output representation
+        # ------------------------------------------------------
+
+        processed = np.zeros(
+            len(values),
+            dtype=np.int32
+        )
+
+        abnormal_mask = (
+            clusters != normal_cluster
+        )
+
+        # ------------------------------------------------------
+        # No abnormal observations
+        # ------------------------------------------------------
+
+        if not np.any(
+            abnormal_mask
+        ):
+
+            return processed
+
+        normal_center = float(
+            centers[normal_cluster]
+        )
+
+        # ------------------------------------------------------
+        # Distance from normal cluster
+        # ------------------------------------------------------
+
+        scores = np.abs(
+            values[abnormal_mask]
+            - normal_center
+        )
+
+        if len(scores) == 0:
+
+            return processed
+
+        max_score = float(
+            np.max(scores)
+        )
+
+        # ------------------------------------------------------
+        # Safety for zero distance
+        # ------------------------------------------------------
+
+        if max_score <= 0:
+
+            processed[
+                abnormal_mask
+            ] = 1
+
+            return processed
+
+        # ------------------------------------------------------
+        # Convert distance into levels
+        #
+        # Example with NUM_CLASSES = 15:
+        #
+        # low abnormality  -> 1
+        # high abnormality -> 15
+        # ------------------------------------------------------
+
+        levels = np.ceil(
+            (
+                scores /
+                max_score
+            )
+            * self.num_classes
+        ).astype(
+            np.int32
+        )
+
+        levels = np.clip(
+            levels,
+            1,
+            self.num_classes
+        )
+
+        processed[
+            abnormal_mask
+        ] = levels
+
+        return processed
 
     # ==========================================================
-    # Reset Checkpoint
+    # Process Entire DataFrame
     # ==========================================================
 
-    def reset(self):
+    def process(
+        self,
+        df: pd.DataFrame
+    ) -> pd.DataFrame:
 
-        with open(
-            CHECKPOINT_FILE,
-            "w",
-            encoding="utf-8"
-        ) as f:
+        self.logger.info("=" * 70)
 
-            json.dump(
-                {},
-                f,
-                indent=4
+        self.logger.info(
+            "Preprocessing Features"
+        )
+
+        self.logger.info("=" * 70)
+
+        if df is None:
+
+            raise ValueError(
+                "Input DataFrame is None."
+            )
+
+        if df.empty:
+
+            self.logger.warning(
+                "Input DataFrame is empty."
+            )
+
+            return df.copy()
+
+        # ------------------------------------------------------
+        # Copy input
+        # ------------------------------------------------------
+
+        processed_df = df.copy()
+
+        # ------------------------------------------------------
+        # Clean column names
+        # ------------------------------------------------------
+
+        processed_df.columns = [
+            str(column).strip()
+            for column
+            in processed_df.columns
+        ]
+
+        # ------------------------------------------------------
+        # Normalize target column name
+        # ------------------------------------------------------
+
+        target_column_found = None
+
+        for column in processed_df.columns:
+
+            if (
+                str(column).lower()
+                ==
+                TARGET_COLUMN.lower()
+            ):
+
+                target_column_found = column
+                break
+
+        if (
+            target_column_found is not None
+            and
+            target_column_found
+            != TARGET_COLUMN
+        ):
+
+            processed_df.rename(
+                columns={
+                    target_column_found:
+                    TARGET_COLUMN
+                },
+                inplace=True
+            )
+
+        # ------------------------------------------------------
+        # Verify target
+        # ------------------------------------------------------
+
+        if TARGET_COLUMN not in processed_df.columns:
+
+            raise ValueError(
+                f"Target column "
+                f"'{TARGET_COLUMN}' "
+                f"not found in DataFrame."
+            )
+
+        # ------------------------------------------------------
+        # Target statistics
+        #
+        # IMPORTANT:
+        # Target is NOT K-means processed.
+        # ------------------------------------------------------
+
+        target_classes = (
+            processed_df[
+                TARGET_COLUMN
+            ]
+            .dropna()
+            .nunique()
+        )
+
+        self.logger.info(
+            f"Target Classes : "
+            f"{target_classes}"
+        )
+
+        # ------------------------------------------------------
+        # Process candidate features
+        # ------------------------------------------------------
+
+        feature_columns = [
+            column
+            for column
+            in processed_df.columns
+            if column != TARGET_COLUMN
+        ]
+
+        processed_count = 0
+
+        constant_count = 0
+
+        # ------------------------------------------------------
+        # K-means preprocessing
+        # ------------------------------------------------------
+
+        for column in feature_columns:
+
+            original = processed_df[
+                column
+            ]
+
+            # Check whether feature is constant
+            numeric_values = pd.to_numeric(
+                original,
+                errors="coerce"
+            )
+
+            numeric_values = (
+                numeric_values
+                .replace(
+                    [np.inf, -np.inf],
+                    np.nan
+                )
+                .fillna(0)
+            )
+
+            if (
+                numeric_values.nunique()
+                <= 1
+            ):
+
+                constant_count += 1
+
+            processed_df[
+                column
+            ] = self.process_feature(
+                original
+            )
+
+            processed_count += 1
+
+        # ------------------------------------------------------
+        # Final information
+        # ------------------------------------------------------
+
+        self.logger.info(
+            f"Processed "
+            f"{processed_count} features."
+        )
+
+        self.logger.info(
+            f"Constant Features : "
+            f"{constant_count}"
+        )
+
+        self.logger.info(
+            f"Processed DataFrame Shape : "
+            f"{processed_df.shape}"
+        )
+
+        # ------------------------------------------------------
+        # Confirm label remains untouched
+        # ------------------------------------------------------
+
+        self.logger.info(
+            f"Target Column '{TARGET_COLUMN}' "
+            "was excluded from K-means preprocessing."
+        )
+
+        return processed_df
+
+====================================================
+File: C:\IDS\services\feature_selection\producer.py
+====================================================
+import json
+
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+from config import (
+    BOOTSTRAP_SERVER,
+    OUTPUT_TOPIC,
+    CLIENT_ID,
+    ACKS,
+    MAX_RETRIES,
+    COMPRESSION_TYPE,
+    KAFKA_BATCH_SIZE,
+    LINGER_MS,
+    MAX_IN_FLIGHT,
+    REQUEST_TIMEOUT_MS,
+    DELIVERY_TIMEOUT_MS,
+    MAX_BLOCK_MS,
+    RETRY_BACKOFF_MS,
+    PRINT_STATS_EVERY
+)
+
+from logger import IDSLogger
+
+
+class FeatureSelectionProducer:
+
+    def __init__(self):
+
+        self.logger = IDSLogger().get_logger()
+
+        self.sent_records = 0
+        self.success_records = 0
+        self.failed_records = 0
+
+        producer_config = {
+            "bootstrap_servers": BOOTSTRAP_SERVER,
+            "client_id": CLIENT_ID,
+            "acks": ACKS,
+            "retries": MAX_RETRIES,
+            "retry_backoff_ms": RETRY_BACKOFF_MS,
+            "batch_size": KAFKA_BATCH_SIZE,
+            "linger_ms": LINGER_MS,
+            "request_timeout_ms": REQUEST_TIMEOUT_MS,
+            "delivery_timeout_ms": DELIVERY_TIMEOUT_MS,
+            "max_block_ms": MAX_BLOCK_MS,
+            "max_in_flight_requests_per_connection": MAX_IN_FLIGHT,
+
+            "value_serializer": lambda value:
+                json.dumps(value).encode("utf-8")
+        }
+
+        if COMPRESSION_TYPE:
+            producer_config["compression_type"] = COMPRESSION_TYPE
+
+        self.producer = KafkaProducer(
+            **producer_config
+        )
+
+        self.logger.info("=" * 70)
+
+        self.logger.info(
+            f"Connected to Kafka Topic : {OUTPUT_TOPIC}"
+        )
+
+        self.logger.info(
+            "Kafka Producer Started Successfully"
+        )
+
+        self.logger.info("=" * 70)
+
+    # ==========================================================
+    # Send
+    # ==========================================================
+
+    def send(self, record):
+
+        try:
+
+            future = self.producer.send(
+                OUTPUT_TOPIC,
+                value=record
+            )
+
+            future.add_callback(
+                self._delivery_success
+            )
+
+            future.add_errback(
+                self._delivery_error
+            )
+
+            self.sent_records += 1
+
+            if (
+                self.sent_records
+                % PRINT_STATS_EVERY
+                == 0
+            ):
+
+                self.logger.info(
+                    f"Queued Records : "
+                    f"{self.sent_records:,}"
+                )
+
+        except Exception as error:
+
+            self.failed_records += 1
+
+            self.logger.exception(
+                f"Producer Error : {error}"
             )
 
     # ==========================================================
-    # Delete Checkpoint
+    # Delivery Success
     # ==========================================================
 
-    def delete(self):
+    def _delivery_success(self, metadata):
 
-        if CHECKPOINT_FILE.exists():
-            CHECKPOINT_FILE.unlink()
+        self.success_records += 1
 
     # ==========================================================
-    # Exists
+    # Delivery Error
     # ==========================================================
 
-    def exists(self):
+    def _delivery_error(self, exception):
 
-        return CHECKPOINT_FILE.exists()
+        self.failed_records += 1
+
+        self.logger.error(
+            f"Kafka Delivery Failed : "
+            f"{exception}"
+        )
+
+    # ==========================================================
+    # Flush
+    # ==========================================================
+
+    def flush(self):
+
+        try:
+
+            self.producer.flush(
+                timeout=30
+            )
+
+        except KafkaError as error:
+
+            self.logger.exception(
+                f"Flush Error : {error}"
+            )
+
+    # ==========================================================
+    # Close
+    # ==========================================================
+
+    def close(self):
+
+        try:
+
+            self.flush()
+
+        finally:
+
+            self.producer.close(
+                timeout=30
+            )
+
+        self.logger.info("=" * 70)
+
+        self.logger.info(
+            "PRODUCER SUMMARY"
+        )
+
+        self.logger.info("=" * 70)
+
+        self.logger.info(
+            f"Queued Records     : "
+            f"{self.sent_records:,}"
+        )
+
+        self.logger.info(
+            f"Delivered Records  : "
+            f"{self.success_records:,}"
+        )
+
+        self.logger.info(
+            f"Failed Records     : "
+            f"{self.failed_records:,}"
+        )
+
+        self.logger.info("=" * 70)
 
 ====================================================
-File: C:\IDS\services\ingestion\config.py
+File: C:\IDS\services\feature_selection\propensity_score.py
+====================================================
+import pandas as pd
+
+from config import (
+    MIN_GROUP_SIZE,
+    MAX_CMB_CONDITIONING_COLUMNS
+)
+
+from logger import IDSLogger
+
+
+class PropensityScore:
+
+    def __init__(
+        self,
+        min_group_size=MIN_GROUP_SIZE,
+        max_cmb=MAX_CMB_CONDITIONING_COLUMNS
+    ):
+
+        self.min_group_size = int(min_group_size)
+        self.max_cmb = int(max_cmb)
+
+        self.logger = IDSLogger().get_logger()
+
+    # ==========================================================
+    # Remove Duplicate Columns
+    # ==========================================================
+
+    def _remove_duplicate_columns(self, dataframe):
+
+        if dataframe is None:
+            return dataframe
+
+        if dataframe.columns.duplicated().any():
+
+            duplicate_columns = (
+                dataframe.columns[
+                    dataframe.columns.duplicated()
+                ]
+                .tolist()
+            )
+
+            self.logger.warning(
+                f"Duplicate dataframe columns detected: "
+                f"{duplicate_columns}"
+            )
+
+            dataframe = dataframe.loc[
+                :,
+                ~dataframe.columns.duplicated(
+                    keep="first"
+                )
+            ].copy()
+
+        return dataframe
+
+    # ==========================================================
+    # Remove Duplicate List Values
+    # ==========================================================
+
+    def _unique_columns(self, columns):
+
+        if not columns:
+            return []
+
+        return list(
+            dict.fromkeys(columns)
+        )
+
+    # ==========================================================
+    # Prepare Conditioning Set
+    # ==========================================================
+
+    def prepare_cmb(
+        self,
+        dataframe,
+        cmb
+    ):
+
+        if dataframe is None:
+            return []
+
+        if not cmb:
+            return []
+
+        valid_columns = [
+            col
+            for col in cmb
+            if col in dataframe.columns
+        ]
+
+        # Remove duplicates
+        valid_columns = self._unique_columns(
+            valid_columns
+        )
+
+        # ------------------------------------------------------
+        # Engineering limitation
+        #
+        # Prevent extremely sparse high-dimensional
+        # conditional grouping.
+        # ------------------------------------------------------
+
+        if len(valid_columns) <= self.max_cmb:
+
+            return valid_columns
+
+        self.logger.warning(
+            f"CMB size ({len(valid_columns)}) "
+            f"exceeds MAX_CMB_CONDITIONING_COLUMNS "
+            f"({self.max_cmb}); "
+            f"using the most recent conditioning columns "
+            f"for empirical estimation."
+        )
+
+        return valid_columns[
+            -self.max_cmb:
+        ]
+
+    # ==========================================================
+    # Conditional Distributions
+    #
+    # Calculates:
+    #
+    # P(Y | X, CMB)
+    #
+    # ==========================================================
+
+    def conditional_distributions(
+        self,
+        dataframe,
+        feature,
+        target,
+        cmb
+    ):
+
+        # ======================================================
+        # Basic validation
+        # ======================================================
+
+        if dataframe is None:
+            return {}
+
+        if dataframe.empty:
+            return {}
+
+        if feature == target:
+            return {}
+
+        if feature not in dataframe.columns:
+            return {}
+
+        if target not in dataframe.columns:
+            return {}
+
+        # ======================================================
+        # Remove duplicate dataframe columns
+        # ======================================================
+
+        dataframe = (
+            self._remove_duplicate_columns(
+                dataframe
+            )
+        )
+
+        # After removing duplicates, verify again
+        if feature not in dataframe.columns:
+            return {}
+
+        if target not in dataframe.columns:
+            return {}
+
+        # ======================================================
+        # Prepare CMB
+        # ======================================================
+
+        cmb_columns = self.prepare_cmb(
+            dataframe,
+            cmb
+        )
+
+        # ------------------------------------------------------
+        # Feature must not appear in CMB
+        # Target must not appear in CMB
+        # ------------------------------------------------------
+
+        cmb_columns = [
+            col
+            for col in cmb_columns
+            if col != feature
+            and col != target
+        ]
+
+        cmb_columns = self._unique_columns(
+            cmb_columns
+        )
+
+        # ======================================================
+        # Build grouping columns
+        # ======================================================
+
+        group_columns = (
+            cmb_columns + [feature]
+        )
+
+        group_columns = self._unique_columns(
+            group_columns
+        )
+
+        # ======================================================
+        # Required columns
+        # ======================================================
+
+        required_columns = (
+            group_columns + [target]
+        )
+
+        required_columns = self._unique_columns(
+            required_columns
+        )
+
+        # ======================================================
+        # Validate required columns
+        # ======================================================
+
+        missing_columns = [
+            column
+            for column in required_columns
+            if column not in dataframe.columns
+        ]
+
+        if missing_columns:
+
+            self.logger.warning(
+                f"Skipping feature '{feature}'. "
+                f"Missing columns: {missing_columns}"
+            )
+
+            return {}
+
+        # ======================================================
+        # IMPORTANT
+        #
+        # Create a completely independent dataframe containing
+        # only the columns required by this calculation.
+        #
+        # This prevents duplicate column/index collisions
+        # during reset_index().
+        # ======================================================
+
+        work_df = dataframe[
+            required_columns
+        ].copy()
+
+        # ======================================================
+        # Final duplicate-column protection
+        # ======================================================
+
+        work_df = (
+            self._remove_duplicate_columns(
+                work_df
+            )
+        )
+
+        # ======================================================
+        # Group:
+        #
+        # CMB + X + Y
+        #
+        # and calculate frequency.
+        # ======================================================
+
+        try:
+
+            grouped = (
+                work_df
+                .groupby(
+                    group_columns + [target],
+                    observed=True,
+                    dropna=False
+                )
+                .size()
+                .rename("count")
+                .reset_index()
+            )
+
+        except ValueError as error:
+
+            self.logger.error(
+                f"Grouping error for feature "
+                f"'{feature}': {error}"
+            )
+
+            return {}
+
+        except Exception as error:
+
+            self.logger.exception(
+                f"Unexpected grouping error for "
+                f"'{feature}': {error}"
+            )
+
+            return {}
+
+        if grouped.empty:
+            return {}
+
+        # ======================================================
+        # Remove groups smaller than MIN_GROUP_SIZE
+        # ======================================================
+
+        try:
+
+            cell_totals = (
+                grouped
+                .groupby(
+                    group_columns,
+                    observed=True,
+                    dropna=False
+                )["count"]
+                .transform("sum")
+            )
+
+        except Exception as error:
+
+            self.logger.exception(
+                f"Cell-total calculation failed "
+                f"for '{feature}': {error}"
+            )
+
+            return {}
+
+        grouped = grouped[
+            cell_totals >= self.min_group_size
+        ].copy()
+
+        if grouped.empty:
+            return {}
+
+        # ======================================================
+        # Calculate:
+        #
+        # P(Y | X, CMB)
+        #
+        # ======================================================
+
+        try:
+
+            denominators = (
+                grouped
+                .groupby(
+                    group_columns,
+                    observed=True,
+                    dropna=False
+                )["count"]
+                .transform("sum")
+            )
+
+            grouped["probability"] = (
+                grouped["count"]
+                / denominators
+            )
+
+        except Exception as error:
+
+            self.logger.exception(
+                f"Probability calculation failed "
+                f"for '{feature}': {error}"
+            )
+
+            return {}
+
+        # ======================================================
+        # Build nested distribution
+        #
+        # {
+        #     CMB_value: {
+        #
+        #         X_value: {
+        #             Y_value: probability
+        #         }
+        #
+        #     }
+        # }
+        #
+        # ======================================================
+
+        result = {}
+
+        try:
+
+            grouped_iterator = grouped.groupby(
+                group_columns,
+                observed=True,
+                dropna=False
+            )
+
+            for group_values, group in grouped_iterator:
+
+                # ----------------------------------------------
+                # Convert scalar to tuple
+                # ----------------------------------------------
+
+                if not isinstance(
+                    group_values,
+                    tuple
+                ):
+
+                    group_values = (
+                        group_values,
+                    )
+
+                # ----------------------------------------------
+                # Separate CMB and feature value
+                # ----------------------------------------------
+
+                if cmb_columns:
+
+                    cmb_key = tuple(
+                        group_values[:-1]
+                    )
+
+                    x_value = (
+                        group_values[-1]
+                    )
+
+                else:
+
+                    cmb_key = ()
+
+                    x_value = (
+                        group_values[0]
+                    )
+
+                # ----------------------------------------------
+                # Build P(Y | X,CMB)
+                # ----------------------------------------------
+
+                distribution = {}
+
+                for _, row in group.iterrows():
+
+                    y_value = row[target]
+
+                    probability = float(
+                        row["probability"]
+                    )
+
+                    distribution[
+                        y_value
+                    ] = probability
+
+                if not distribution:
+                    continue
+
+                if cmb_key not in result:
+
+                    result[cmb_key] = {}
+
+                result[
+                    cmb_key
+                ][
+                    x_value
+                ] = distribution
+
+        except Exception as error:
+
+            self.logger.exception(
+                f"Distribution construction failed "
+                f"for '{feature}': {error}"
+            )
+
+            return {}
+
+        # ======================================================
+        # Important for Eq. 13:
+        #
+        # Need at least two X values under the same CMB.
+        # ======================================================
+
+        result = {
+            cmb_key: per_x
+            for cmb_key, per_x
+            in result.items()
+            if len(per_x) >= 2
+        }
+
+        return result
+
+    # ==========================================================
+    # Calculate All Candidate Features
+    # ==========================================================
+
+    def calculate_all_fast(
+        self,
+        dataframe,
+        features,
+        target,
+        cmb
+    ):
+
+        distributions = {}
+
+        # ======================================================
+        # Validation
+        # ======================================================
+
+        if dataframe is None:
+            return distributions
+
+        if dataframe.empty:
+            return distributions
+
+        if not features:
+            return distributions
+
+        if target not in dataframe.columns:
+            self.logger.warning(
+                f"Target '{target}' not found."
+            )
+
+            return distributions
+
+        # ======================================================
+        # Remove duplicate dataframe columns ONCE
+        #
+        # This is faster than doing it repeatedly.
+        # ======================================================
+
+        dataframe = (
+            self._remove_duplicate_columns(
+                dataframe
+            )
+        )
+
+        # ======================================================
+        # Remove duplicate candidate features
+        # ======================================================
+
+        features = self._unique_columns(
+            features
+        )
+
+        # ======================================================
+        # Never allow target to become X
+        # ======================================================
+
+        candidate_features = [
+            feature
+            for feature in features
+            if feature != target
+            and feature in dataframe.columns
+        ]
+
+        # ======================================================
+        # Calculate conditional distributions
+        # ======================================================
+
+        for feature in candidate_features:
+
+            distributions[feature] = (
+                self.conditional_distributions(
+                    dataframe,
+                    feature,
+                    target,
+                    cmb
+                )
+            )
+
+        return distributions
+
+====================================================
+File: C:\IDS\services\feature_selection\README.md
+====================================================
+
+====================================================
+File: C:\IDS\services\feature_selection\test_causal.py
+====================================================
+import pandas as pd
+
+from causal_effect import CausalEffect
+
+df = pd.DataFrame({
+
+    "A":[0,0,0,1,1,1],
+
+    "B":[1,1,0,0,0,1],
+
+    "C":[3,3,4,4,5,5],
+
+    "label":[
+        "BENIGN",
+        "BENIGN",
+        "DOS",
+        "DOS",
+        "DOS",
+        "BENIGN"
+    ]
+
+})
+
+ce = CausalEffect()
+
+effects = ce.calculate(df)
+
+print(effects)
+
+print()
+
+print(
+    ce.selected_features(effects)
+)
+
+====================================================
+File: C:\IDS\services\feature_selection\test_feature_ranker.py
+====================================================
+
+====================================================
+File: C:\IDS\services\feature_selection\test_preprocessor.py
+====================================================
+import pandas as pd
+
+from preprocessor import Preprocessor
+
+data = {
+
+    "Flow Duration": [
+        100,
+        120,
+        110,
+        5000,
+        6000,
+        7000
+    ],
+
+    "Flow Bytes/s": [
+        20,
+        22,
+        21,
+        500,
+        600,
+        800
+    ],
+
+    "Label": [
+        "BENIGN",
+        "BENIGN",
+        "BENIGN",
+        "DoS",
+        "DoS",
+        "DoS"
+    ]
+}
+
+df = pd.DataFrame(data)
+
+processor = Preprocessor()
+
+result = processor.process(df)
+
+print(result)
+
+====================================================
+File: C:\IDS\services\feature_selection\test_producer.py
+====================================================
+import json
+import time
+from kafka import KafkaProducer
+
+producer = KafkaProducer(
+    bootstrap_servers='localhost:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
+
+print("Publishing test records to 'clean-traffic'...")
+for i in range(20):
+    sample_flow = {
+        "flow_duration": 1000 + i * 10,
+        "protocol": 6,
+        "flow_bytes_per_sec": 500.0 + i,
+        "flow_packets_per_sec": 50.0,
+        "label": "BENIGN"
+    }
+    producer.send("clean-traffic", value=sample_flow)
+
+producer.flush()
+print("Sent 20 records successfully!")
+
+====================================================
+File: C:\IDS\services\feature_selection\test_propensity.py
+====================================================
+import pandas as pd
+
+from propensity_score import PropensityScore
+
+df = pd.DataFrame({
+
+    "A":[0,0,0,1,1,1],
+
+    "B":[0,1,0,1,0,1],
+
+    "label":[
+        "BENIGN",
+        "BENIGN",
+        "DOS",
+        "DOS",
+        "DOS",
+        "BENIGN"
+    ]
+})
+
+ps = PropensityScore()
+
+scores = ps.calculate(df)
+
+print(scores)
+
+====================================================
+File: C:\IDS\services\ingestion\checkpoint.py
+====================================================
 ====================================================
 """
 config.py
@@ -2878,6 +4454,11 @@ producer.close()
 print("✅ Kafka Producer Test Passed")
 
 ====================================================
+File: C:\IDS\services\ingestion\checkpoints\checkpoint.json
+====================================================
+{}
+
+====================================================
 File: C:\IDS\services\preprocessing\cleaner.py
 ====================================================
 """
@@ -3071,7 +4652,7 @@ MAX_RETRIES = 20
 RETRY_BACKOFF_MS = 1000
 
 # Compression
-COMPRESSION_TYPE = "lz4"
+COMPRESSION_TYPE = "gzip"
 
 # Producer Batching
 BATCH_SIZE = 262144          # 256 KB
@@ -3310,8 +4891,6 @@ class PreprocessingConsumer:
 File: C:\IDS\services\preprocessing\kafka_producer.py
 ====================================================
 """
-kafka_producer.py
------------------
 Enterprise Kafka Producer
 Compatible with kafka-python 2.2.15
 """
@@ -3331,7 +4910,6 @@ from config import (
     BATCH_SIZE,
     LINGER_MS,
     MAX_IN_FLIGHT,
-    BUFFER_MEMORY,
     REQUEST_TIMEOUT_MS,
     DELIVERY_TIMEOUT_MS,
     MAX_BLOCK_MS,
@@ -3368,8 +4946,6 @@ class PreprocessingProducer:
 
             "linger_ms": LINGER_MS,
 
-            "buffer_memory": BUFFER_MEMORY,
-
             "request_timeout_ms": REQUEST_TIMEOUT_MS,
 
             "delivery_timeout_ms": DELIVERY_TIMEOUT_MS,
@@ -3378,11 +4954,10 @@ class PreprocessingProducer:
 
             "max_in_flight_requests_per_connection": MAX_IN_FLIGHT,
 
+            "compression_type": COMPRESSION_TYPE,
+
             "value_serializer": lambda x: json.dumps(x).encode("utf-8"),
         }
-
-        if COMPRESSION_TYPE:
-            producer_config["compression_type"] = COMPRESSION_TYPE
 
         self.producer = KafkaProducer(**producer_config)
 
@@ -3392,7 +4967,7 @@ class PreprocessingProducer:
         self.logger.info("=" * 70)
 
     # ==========================================================
-    # Send
+    # Send Record
     # ==========================================================
 
     def send(self, record):
@@ -3409,7 +4984,6 @@ class PreprocessingProducer:
 
             self.sent_records += 1
 
-            # Flush periodically
             if self.sent_records % PRINT_STATS_EVERY == 0:
 
                 self.producer.flush(timeout=30)
@@ -3427,7 +5001,7 @@ class PreprocessingProducer:
             )
 
     # ==========================================================
-    # Success Callback
+    # Delivery Success
     # ==========================================================
 
     def _delivery_success(self, metadata):
@@ -3435,7 +5009,7 @@ class PreprocessingProducer:
         self.success_records += 1
 
     # ==========================================================
-    # Error Callback
+    # Delivery Failure
     # ==========================================================
 
     def _delivery_error(self, exc):
@@ -3469,11 +5043,9 @@ class PreprocessingProducer:
     def close(self):
 
         try:
-
             self.flush()
 
         finally:
-
             self.producer.close(timeout=30)
 
         self.logger.info("=" * 70)
@@ -3623,232 +5195,10 @@ class IDSLogger:
 ====================================================
 File: C:\IDS\services\preprocessing\README.md
 ====================================================
-# IR-IDS Preprocessing Service
-
-## Overview
-
-The Preprocessing Service is the second microservice in the IR-IDS pipeline.
-
-It consumes raw network traffic records from Kafka, validates them, cleans the data, and publishes standardized records for feature selection.
-
----
-
-## Pipeline
-
-CSV Ingestion Service
-        │
-        ▼
-raw-traffic
-        │
-        ▼
-Preprocessing Service
-        │
-        ▼
-clean-traffic
-
----
-
-## Folder Structure
-
-preprocessing/
-
-├── config.py
-├── logger.py
-├── schema.py
-├── validator.py
-├── cleaner.py
-├── kafka_consumer.py
-├── kafka_producer.py
-├── service.py
-├── requirements.txt
-├── README.md
-├── logs/
-└── tests/
-
----
-
-## Responsibilities
-
-- Consume records from Kafka
-- Validate records
-- Normalize column names
-- Replace null values
-- Replace NaN/Infinity
-- Convert numeric fields
-- Normalize labels
-- Publish cleaned records
-
----
-
-## Input Topic
-
-raw-traffic
-
----
-
-## Output Topic
-
-clean-traffic
-
----
-
-## Run
-
-Install dependencies
-
-pip install -r requirements.txt
-
-Start Kafka
-
-docker compose up -d
-
-Run the service
-
-python service.py
-
----
-
-## Logs
-
-All logs are written to
-
-logs/preprocessing.log
-
----
-
-## Next Service
-
-Feature Selection Service
-
-Input Topic:
-
-clean-traffic
-
-Output Topic:
-
-selected-features
 
 ====================================================
 File: C:\IDS\services\preprocessing\schema.py
 ====================================================
-"""
-schema.py
-----------
-Enterprise Schema Definition for IR-IDS
-
-Defines:
-✓ Column Mapping
-✓ Required Columns
-✓ Numeric Columns
-✓ Label Mapping
-"""
-
-# =============================================================================
-# Column Mapping
-# =============================================================================
-
-COLUMN_MAPPING = {
-
-    "Dst Port": "destination_port",
-    "Src Port": "source_port",
-    "Protocol": "protocol",
-    "Timestamp": "timestamp",
-    "Flow Duration": "flow_duration",
-
-    "Tot Fwd Pkts": "total_forward_packets",
-    "Tot Bwd Pkts": "total_backward_packets",
-
-    "TotLen Fwd Pkts": "total_forward_bytes",
-    "TotLen Bwd Pkts": "total_backward_bytes",
-
-    "Flow Byts/s": "flow_bytes_per_sec",
-    "Flow Pkts/s": "flow_packets_per_sec",
-
-    "Flow IAT Mean": "flow_iat_mean",
-    "Flow IAT Std": "flow_iat_std",
-    "Flow IAT Max": "flow_iat_max",
-    "Flow IAT Min": "flow_iat_min",
-
-    "Fwd IAT Tot": "forward_iat_total",
-    "Bwd IAT Tot": "backward_iat_total",
-
-    "Label": "label"
-
-}
-
-# =============================================================================
-# Required Columns
-# =============================================================================
-
-REQUIRED_COLUMNS = [
-
-    "Label"
-
-]
-
-# =============================================================================
-# Numeric Columns
-# =============================================================================
-
-NUMERIC_COLUMNS = [
-
-    "destination_port",
-    "source_port",
-    "protocol",
-
-    "flow_duration",
-
-    "total_forward_packets",
-    "total_backward_packets",
-
-    "total_forward_bytes",
-    "total_backward_bytes",
-
-    "flow_bytes_per_sec",
-    "flow_packets_per_sec",
-
-    "flow_iat_mean",
-    "flow_iat_std",
-    "flow_iat_max",
-    "flow_iat_min",
-
-    "forward_iat_total",
-    "backward_iat_total"
-
-]
-
-# =============================================================================
-# Label Mapping
-# =============================================================================
-
-LABEL_MAPPING = {
-
-    "BENIGN": "BENIGN",
-    "Benign": "BENIGN",
-    " benign ": "BENIGN",
-
-    "FTP-BruteForce": "FTP_BRUTEFORCE",
-    "SSH-Bruteforce": "SSH_BRUTEFORCE",
-
-    "DoS attacks-Hulk": "DOS_HULK",
-    "DoS attacks-GoldenEye": "DOS_GOLDENEYE",
-    "DoS attacks-Slowloris": "DOS_SLOWLORIS",
-    "DoS attacks-SlowHTTPTest": "DOS_SLOWHTTPTEST",
-
-    "DDoS attacks-LOIC-HTTP": "DDOS_LOIC_HTTP",
-    "DDoS attacks-LOIC-UDP": "DDOS_LOIC_UDP",
-
-    "SQL Injection": "SQL_INJECTION",
-    "Brute Force -Web": "WEB_BRUTEFORCE",
-    "Brute Force -XSS": "WEB_XSS",
-
-    "Infilteration": "INFILTERATION",
-
-    "Bot": "BOT"
-}
-
-====================================================
-File: C:\IDS\services\preprocessing\service.py
 ====================================================
 """
 service.py
