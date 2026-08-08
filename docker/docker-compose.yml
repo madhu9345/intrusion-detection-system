@@ -1,6 +1,9 @@
+version: "3.9"
+
 services:
+
   kafka:
-    image: apache/kafka:latest
+    image: apache/kafka:3.9.1
     container_name: kafka
     hostname: kafka
 
@@ -21,19 +24,51 @@ services:
 
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
+      # Single-node Kafka settings
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # Automatically create topics (development only)
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
     volumes:
       - kafka-data:/var/lib/kafka/data
+
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
+
     ports:
       - "8080:8080"
+
     depends_on:
       - kafka
+
     environment:
       KAFKA_CLUSTERS_0_NAME: Local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+    restart: unless-stopped
+
+  feature-selection:
+    build:
+      context: ../services/feature_selection
+
+    container_name: feature-selection
+
+    depends_on:
+      - kafka
+
+    restart: unless-stopped
+
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      INPUT_TOPIC: clean-traffic
+      OUTPUT_TOPIC: selected-features
+      GROUP_ID: feature-selection-group
 
 volumes:
   kafka-data:

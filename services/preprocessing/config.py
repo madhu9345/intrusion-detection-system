@@ -58,7 +58,7 @@ MAX_RETRIES = 20
 RETRY_BACKOFF_MS = 1000
 
 # Compression
-COMPRESSION_TYPE = "lz4"
+COMPRESSION_TYPE = "gzip"
 
 # Producer Batching
 BATCH_SIZE = 262144          # 256 KB
