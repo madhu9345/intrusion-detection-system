@@ -7,3 +7,4 @@ numpy==2.3.2
 
 # Environment Variables
 python-dotenv==1.1.1
+lz4

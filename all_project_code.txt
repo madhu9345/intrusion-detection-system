@@ -1,0 +1,4109 @@
+
+====================================================
+File: C:\IDS\README.md
+====================================================
+
+
+# 🛡️ IR-IDS 
+
+
+### A Network-Based Intrusion Detection System Based on Causal Feature Selection and Explainable Model Optimization
+
+### Using Apache Kafka • Docker • Machine Learning • Explainable AI • Threat Intelligence
+
+
+![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python)
+![Apache Kafka](https://img.shields.io/badge/Apache-Kafka-orange?style=for-the-badge&logo=apachekafka)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker)
+![Machine Learning](https://img.shields.io/badge/Machine-Learning-success?style=for-the-badge)
+![Microservices](https://img.shields.io/badge/Microservices-Architecture-purple?style=for-the-badge)
+![Explainable AI](https://img.shields.io/badge/Explainable-AI-red?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+---
+
+### 🚀 High-Performance • Scalable • Explainable • Adaptive Cyber Security Platform
+
+</div>
+
+---
+
+# 📚 Table of Contents
+
+- [Overview](#-overview)
+- [Problem Statement](#-problem-statement)
+- [Project Objectives](#-project-objectives)
+- [Key Features](#-key-features)
+- [System Architecture](#-system-architecture)
+- [Real-Time Detection Pipeline](#-real-time-detection-pipeline)
+- [Offline Training Pipeline](#-offline-training-pipeline)
+- [Threat Intelligence Pipeline](#-threat-intelligence-pipeline)
+- [Adaptive Learning Pipeline](#-adaptive-learning-pipeline)
+- [Alert Pipeline](#-alert-pipeline)
+- [Complete Data Flow](#-complete-data-flow)
+- [Kafka Topics](#-kafka-topics)
+- [Microservice Architecture](#-microservice-architecture)
+- [Technology Stack](#-technology-stack)
+- [Repository Structure](#-repository-structure)
+- [Installation Guide](#-installation-guide)
+- [Docker Deployment](#-docker-deployment)
+- [Running the Project](#-running-the-project)
+- [Machine Learning Pipeline](#-machine-learning-pipeline)
+- [Datasets](#-datasets)
+- [Roadmap](#-roadmap)
+- [Contributors](#-contributors)
+- [License](#-license)
+
+---
+
+# 📖 Overview
+
+**IR-IDS (Intelligent Real-Time Intrusion Detection System)** is a distributed, event-driven Network Intrusion Detection System designed to identify both known and unknown cyber attacks in real time.
+
+Unlike conventional IDS solutions that rely solely on static signatures or isolated machine learning models, IR-IDS combines:
+
+- Apache Kafka based real-time streaming
+- Distributed microservice architecture
+- Explainable Artificial Intelligence (XAI)
+- Causal Feature Selection
+- Machine Learning based attack classification
+- Unknown attack detection
+- Threat Intelligence integration
+- Adaptive model retraining
+
+The platform is designed to process massive volumes of network traffic with minimal latency while remaining scalable, modular, and production-ready.
+
+---
+
+# ❗ Problem Statement
+
+Modern enterprise networks generate millions of packets every hour.
+
+Traditional Intrusion Detection Systems suffer from several limitations:
+
+- Signature-based detection cannot identify zero-day attacks.
+- Large datasets introduce high computational overhead.
+- Machine learning models often lack explainability.
+- Static models degrade over time as new attack patterns emerge.
+- Existing IDS platforms rarely integrate threat intelligence or adaptive retraining.
+
+These challenges motivate the development of an intelligent, scalable, and continuously learning intrusion detection platform.
+
+---
+
+# 🎯 Project Objectives
+
+The primary objectives of IR-IDS are:
+
+- Detect malicious network traffic in real time.
+- Process high-volume network streams using Apache Kafka.
+- Build a scalable microservice-based IDS architecture.
+- Perform automated preprocessing and validation.
+- Reduce feature dimensionality using causal feature selection.
+- Train explainable machine learning models.
+- Detect previously unseen cyber attacks.
+- Integrate Threat Intelligence into the detection workflow.
+- Generate real-time alerts for analysts.
+- Continuously improve detection through adaptive learning.
+
+---
+
+# 💡 Why IR-IDS?
+
+Traditional IDS solutions are reactive.
+
+IR-IDS is designed to be:
+
+- **Real-Time** — Processes live network traffic continuously.
+- **Scalable** — Kafka-based distributed architecture.
+- **Explainable** — Decisions can be interpreted by analysts.
+- **Adaptive** — Learns from newly discovered attacks.
+- **Extensible** — Modular microservice architecture allows easy expansion.
+- **Production Ready** — Containerized using Docker.
+
+---
+
+# 🌟 Key Features
+
+## ⚡ High-Speed Streaming
+
+- Apache Kafka Event Streaming
+- Distributed Message Queues
+- Asynchronous Processing
+- High Throughput Architecture
+
+---
+
+## 🛡️ Real-Time Intrusion Detection
+
+- Live Traffic Processing
+- Continuous Packet Analysis
+- Low-Latency Detection
+- Event-Driven Processing
+
+---
+
+## 🧹 Intelligent Data Preprocessing
+
+- Schema Validation
+- Missing Value Handling
+- Data Cleaning
+- Normalization
+- Feature Formatting
+- Invalid Record Detection
+
+---
+
+## 🧠 Explainable Machine Learning
+
+- DG-CFS Feature Selection
+- Shapley Tree Classification
+- Explainable Predictions
+- Confidence Estimation
+
+---
+
+## 🚨 Unknown Attack Detection
+
+- KAN-CVAE based anomaly detection
+- Confidence Score Analysis
+- Zero-Day Attack Detection
+- Novel Threat Discovery
+
+---
+
+## 🌐 Threat Intelligence
+
+- Threat Intelligence Database
+- IOC Management
+- Analyst Feedback Loop
+- Knowledge Enrichment
+
+---
+
+## 🔄 Adaptive Learning
+
+- Continuous Dataset Collection
+- Model Retraining
+- Versioned Model Registry
+- Incremental Learning
+
+---
+
+## 📊 Alert Management
+
+- Kafka Alert Streaming
+- Security Dashboard
+- Incident Database
+- Analyst Notification
+
+---
+
+# 🏆 Highlights
+
+✔ Apache Kafka Streaming Platform
+
+✔ Dockerized Microservices
+
+✔ Distributed Architecture
+
+✔ Explainable AI
+
+✔ Causal Feature Selection
+
+✔ Unknown Attack Detection
+
+✔ Threat Intelligence Integration
+
+✔ Adaptive Learning
+
+✔ Model Registry
+
+✔ High Throughput
+
+✔ Enterprise Ready
+
+✔ Modular Design
+
+✔ Extensible Framework
+
+✔ Research-Oriented Architecture
+
+✔ Production Deployment Support
+
+---
+
+# 🏗️ System Architecture
+
+The IR-IDS platform consists of four tightly integrated pipelines:
+
+1. **Real-Time Detection Pipeline**
+2. **Offline Training Pipeline**
+3. **Threat Intelligence Pipeline**
+4. **Adaptive Learning Pipeline**
+
+Each pipeline communicates asynchronously through Apache Kafka, enabling scalable and fault-tolerant data processing while maintaining high throughput and low latency.
+
+<p align="center">
+<img src="docs/architecture.png" width="100%">
+</p>
+
+---
+
+# ⚡ Real-Time Detection Pipeline
+
+The **Real-Time Detection Pipeline** is responsible for continuously monitoring
+live network traffic and identifying malicious activities with minimal latency.
+
+Unlike traditional offline Intrusion Detection Systems (IDS), IR-IDS processes
+network packets as streaming events through Apache Kafka, enabling scalable,
+fault-tolerant and asynchronous data processing.
+
+---
+
+## Workflow
+
+```text
+Network Traffic
+       │
+       ▼
+Packet Capture
+(Suricata / Zeek / PCAP)
+       │
+       ▼
+Kafka Producer
+       │
+       ▼
+Kafka Topic
+(raw-traffic)
+       │
+       ▼
+Preprocessing Service
+       │
+       ▼
+Kafka Topic
+(clean-traffic)
+       │
+       ▼
+Real-Time Storage
+```
+
+---
+
+## Stage 1 — Network Traffic Collection
+
+The pipeline begins by capturing live network traffic from enterprise
+networks.
+
+Traffic sources include:
+
+- Enterprise LAN
+- Cloud Infrastructure
+- IoT Devices
+- Data Centers
+- Firewalls
+- Routers
+- IDS Sensors
+
+Supported packet capture engines
+
+- Suricata
+- Zeek (Bro)
+- PCAP
+- NetFlow
+- Custom Packet Collectors
+
+---
+
+## Stage 2 — Kafka Ingestion Service
+
+The ingestion microservice converts captured packets into structured records
+and publishes them into Apache Kafka.
+
+Responsibilities
+
+- Read incoming packets
+- Convert packets into JSON
+- Serialize records
+- Publish records asynchronously
+- Handle high-volume streaming
+- Fault-tolerant message publishing
+
+Output Topic
+
+```text
+raw-traffic
+```
+
+---
+
+## Stage 3 — Preprocessing Service
+
+The preprocessing microservice validates and cleans incoming traffic before it
+is consumed by downstream machine learning services.
+
+Responsibilities
+
+✔ Missing value handling
+
+✔ Null replacement
+
+✔ Infinite value replacement
+
+✔ Feature normalization
+
+✔ Schema validation
+
+✔ Invalid record removal
+
+✔ Data formatting
+
+✔ Label normalization
+
+✔ Data quality assurance
+
+Output Topic
+
+```text
+clean-traffic
+```
+
+---
+
+## Stage 4 — Real-Time Storage
+
+Cleaned traffic is stored for:
+
+- Future model retraining
+- Threat investigation
+- Historical analysis
+- Adaptive learning
+- Data auditing
+
+---
+
+# 🧠 Offline Training Pipeline
+
+Unlike the Real-Time Detection Pipeline, the Offline Training Pipeline focuses
+on building and continuously improving machine learning models.
+
+The pipeline operates on historical datasets together with previously captured
+network traffic.
+
+---
+
+## Workflow
+
+```text
+Historical Dataset
+
+        │
+
+        ▼
+
+Preprocessing
+
+        │
+
+        ▼
+
+DG-CFS Feature Selection
+
+        │
+
+        ▼
+
+Train/Test Split
+
+        │
+
+        ▼
+
+Shapley Tree Classifier
+
+        │
+
+        ▼
+
+Known Attack Detection
+
+        │
+
+        ▼
+
+Confidence Score Evaluation
+
+        │
+
+        ▼
+
+KAN-CVAE
+
+        │
+
+        ▼
+
+Unknown Attack Detection
+```
+
+---
+
+## Historical Dataset
+
+Training data may include:
+
+- CICIDS2017
+- CICIDS2018
+- CSE-CIC-IDS2018
+- UNSW-NB15
+- TON-IoT
+- Custom Enterprise Traffic
+
+---
+
+## DG-CFS Feature Selection
+
+The **DG-CFS (Dynamic Graph Causal Feature Selection)** module identifies the
+most relevant network features while eliminating redundant attributes.
+
+Advantages
+
+- Lower computational cost
+- Reduced memory usage
+- Faster inference
+- Better generalization
+- Improved explainability
+
+---
+
+## Train/Test Split
+
+Selected features are divided into:
+
+- Training Dataset
+- Validation Dataset
+- Testing Dataset
+
+This enables unbiased model evaluation.
+
+---
+
+## Shapley Tree Classifier
+
+The primary classifier is an Explainable AI model based on decision trees.
+
+Responsibilities
+
+- Known attack classification
+- Explainable predictions
+- Feature importance estimation
+- Confidence score generation
+
+Advantages
+
+- High interpretability
+- Fast inference
+- Suitable for security analysts
+
+---
+
+## Confidence Score Evaluation
+
+Every prediction is assigned a confidence score.
+
+Possible outcomes
+
+### High Confidence
+
+Known attack
+
+↓
+
+Generate Alert
+
+### Low Confidence
+
+Potential Unknown Attack
+
+↓
+
+Forward to KAN-CVAE
+
+---
+
+## KAN-CVAE
+
+KAN-CVAE is responsible for detecting attacks never seen during training.
+
+Responsibilities
+
+- Novel attack detection
+- Zero-day attack identification
+- Behavioural anomaly detection
+- Latent representation learning
+
+Output
+
+```text
+Unknown Attack
+```
+
+---
+
+# 🌐 Threat Intelligence Pipeline
+
+The Threat Intelligence Pipeline enriches unknown attack information using
+human expertise and security knowledge.
+
+---
+
+## Workflow
+
+```text
+Unknown Attack
+
+      │
+
+      ▼
+
+Threat Intelligence Analyst
+
+      │
+
+      ▼
+
+Threat Intelligence Database
+
+      │
+
+      ▼
+
+Adaptive Learning
+```
+
+---
+
+## Threat Intelligence Analyst
+
+Security analysts investigate unknown attacks by examining
+
+- Attack signatures
+- Indicators of Compromise (IOC)
+- Malware behaviour
+- Network behaviour
+- MITRE ATT&CK Mapping
+- Tactics
+- Techniques
+- Procedures
+
+---
+
+## Threat Intelligence Database
+
+Validated intelligence is stored in a centralized repository.
+
+Contents
+
+- Attack Signatures
+- IOC Database
+- Malware Hashes
+- IP Reputation
+- Domain Reputation
+- Threat Reports
+- Behavioral Indicators
+
+The Threat Intelligence Database improves future detection performance.
+
+---
+
+# 🔄 Adaptive Learning Pipeline
+
+Traditional IDS models become outdated as new attacks emerge.
+
+IR-IDS overcomes this problem using Adaptive Learning.
+
+---
+
+## Workflow
+
+```text
+Realtime Storage
+
+        +
+
+Historical Dataset
+
+        │
+
+        ▼
+
+Merged Dataset
+
+        │
+
+        ▼
+
+Model Retraining
+
+        │
+
+        ▼
+
+Model Registry
+
+        │
+
+        ▼
+
+Updated Detection Model
+```
+
+---
+
+## Adaptive Learning Process
+
+The adaptive learning engine periodically
+
+- Collects newly labelled traffic
+- Merges historical and recent data
+- Retrains the detection model
+- Evaluates performance
+- Stores the best model
+- Deploys the updated classifier
+
+Benefits
+
+✔ Improved Accuracy
+
+✔ Reduced Model Drift
+
+✔ Continuous Learning
+
+✔ Better Unknown Attack Detection
+
+---
+
+# 🚨 Alert Pipeline
+
+Whenever malicious activity is detected, alerts are generated immediately.
+
+---
+
+## Workflow
+
+```text
+Classification Results
+
+        │
+
+        ▼
+
+Kafka Topic
+
+(alerts)
+
+        │
+
+        ▼
+
+Alert Dashboard
+
+        │
+
+        ▼
+
+Security Analyst
+```
+
+---
+
+## Alert Information
+
+Each alert contains
+
+- Timestamp
+- Source IP
+- Destination IP
+- Attack Category
+- Severity Level
+- Confidence Score
+- Prediction Label
+- Threat Intelligence Reference
+- Suggested Mitigation
+
+---
+
+## Alert Severity
+
+| Severity | Description |
+|----------|-------------|
+| Low | Suspicious activity |
+| Medium | Potential intrusion |
+| High | Confirmed attack |
+| Critical | Severe enterprise threat |
+
+---
+
+# 🌊 Complete End-to-End Data Flow
+
+```text
+                Historical Dataset
+                        │
+                        ▼
+                Feature Engineering
+                        │
+                        ▼
+               DG-CFS Feature Selection
+                        │
+                        ▼
+              Shapley Tree Classifier
+                        │
+            ┌───────────┴───────────┐
+            │                       │
+            ▼                       ▼
+     Known Attack          Confidence Score
+                                    │
+                                    ▼
+                              KAN-CVAE
+                                    │
+                                    ▼
+                           Unknown Attack
+                                    │
+                                    ▼
+                     Threat Intelligence Database
+                                    │
+                                    ▼
+                           Adaptive Learning
+                                    ▲
+                                    │
+Realtime Traffic → Kafka → Preprocessing → Clean Traffic
+                                    │
+                                    ▼
+                            Classification
+                                    │
+                                    ▼
+                              Kafka Alerts
+                                    │
+                                    ▼
+                           Security Dashboard
+```
+
+---
+
+# 📡 Apache Kafka Topics
+
+| Topic | Purpose | Producer | Consumer |
+|--------|----------|----------|----------|
+| `raw-traffic` | Raw network traffic | Ingestion Service | Preprocessing Service |
+| `clean-traffic` | Cleaned traffic | Preprocessing | Feature Selection |
+| `selected-features` | Optimized feature set | Feature Selection | Classification |
+| `classification-results` | Prediction output | Classification | Alert Service |
+| `alerts` | Security alerts | Alert Service | Dashboard |
+| `unknown-traffic` *(Future)* | Unknown attacks | KAN-CVAE | Threat Intelligence |
+| `threat-intelligence` *(Future)* | Intelligence updates | Threat Intelligence | Adaptive Learning |
+| `model-updates` *(Future)* | Updated models | Adaptive Learning | Classification |
+
+---
+
+# 🧩 Microservice Architecture
+
+IR-IDS follows a **distributed event-driven microservice architecture**, where each component performs a dedicated task and communicates asynchronously through Apache Kafka.
+
+This modular design enables scalability, fault tolerance, and independent deployment of services.
+
+---
+
+## 🛰️ Ingestion Service
+
+### Purpose
+
+The Ingestion Service is responsible for collecting network traffic and publishing it to Apache Kafka.
+
+### Responsibilities
+
+- Read CSV datasets or live packet streams
+- Parse network traffic records
+- Convert data into JSON format
+- Publish traffic into Kafka
+- Handle streaming data efficiently
+- Support high-throughput ingestion
+
+### Input
+
+- CSV Dataset
+- PCAP Files *(Future)*
+- Live Network Packets *(Future)*
+
+### Output Kafka Topic
+
+```text
+raw-traffic
+```
+
+---
+
+## 🧹 Preprocessing Service
+
+The preprocessing service ensures all incoming traffic is validated and standardized before machine learning.
+
+### Responsibilities
+
+- Data Validation
+- Missing Value Handling
+- Remove Corrupted Records
+- Normalize Labels
+- Feature Formatting
+- Null Replacement
+- Infinite Value Replacement
+- Schema Validation
+- Logging
+- Performance Monitoring
+
+### Input Topic
+
+```text
+raw-traffic
+```
+
+### Output Topic
+
+```text
+clean-traffic
+```
+
+---
+
+## 🎯 Feature Selection Service
+
+The Feature Selection Service reduces dimensionality while preserving informative network attributes.
+
+### Algorithm
+
+DG-CFS
+
+(Dynamic Graph Causal Feature Selection)
+
+### Responsibilities
+
+- Remove redundant features
+- Preserve causal features
+- Improve model performance
+- Reduce computational cost
+- Improve explainability
+
+Input Topic
+
+```text
+clean-traffic
+```
+
+Output Topic
+
+```text
+selected-features
+```
+
+---
+
+## 🤖 Classification Service
+
+The Classification Service predicts the attack category using trained machine learning models.
+
+### Responsibilities
+
+- Load trained models
+- Predict attack labels
+- Estimate confidence score
+- Forward unknown attacks
+- Publish predictions
+
+Input Topic
+
+```text
+selected-features
+```
+
+Output Topic
+
+```text
+classification-results
+```
+
+---
+
+## 🚨 Alert Service
+
+The Alert Service converts prediction results into actionable security alerts.
+
+### Responsibilities
+
+- Generate alerts
+- Assign severity
+- Store incidents
+- Publish notifications
+- Notify dashboard
+
+Input Topic
+
+```text
+classification-results
+```
+
+Output Topic
+
+```text
+alerts
+```
+
+---
+
+## 🌐 Threat Intelligence Service *(Future)*
+
+This service enriches detected threats with external intelligence.
+
+Responsibilities
+
+- IOC Lookup
+- Threat Feed Integration
+- MITRE ATT&CK Mapping
+- Malware Intelligence
+- Threat Database Updates
+
+---
+
+## 🔄 Adaptive Learning Service *(Future)*
+
+Responsibilities
+
+- Collect new labelled traffic
+- Merge historical datasets
+- Retrain models
+- Evaluate accuracy
+- Register improved models
+
+---
+
+# ⚙️ Technology Stack
+
+## Programming Languages
+
+- Python 3.13
+
+---
+
+## Streaming Platform
+
+- Apache Kafka
+
+---
+
+## Containerization
+
+- Docker
+- Docker Compose
+
+---
+
+## Data Processing
+
+- Pandas
+- NumPy
+
+---
+
+## Machine Learning
+
+- Scikit-learn
+
+Future
+
+- XGBoost
+- LightGBM
+- CatBoost
+
+---
+
+## Deep Learning
+
+Future
+
+- TensorFlow
+- Keras
+- PyTorch
+
+---
+
+## Explainable AI
+
+- SHAP
+- Feature Importance
+- Shapley Values
+
+---
+
+## Development Tools
+
+- Git
+- GitHub
+- VS Code
+
+---
+
+## Operating Systems
+
+- Windows
+- Linux
+
+---
+
+# 📂 Repository Structure
+
+```text
+IR-IDS-PROJECT-
+
+│
+├── docker/
+│   ├── docker-compose.yml
+│   └── Dockerfile
+│
+├── docs/
+│   └── architecture.png
+│
+├── datasets/
+│
+├── models/
+│
+├── kafka/
+│
+├── services/
+│
+│   ├── ingestion/
+│   │     ├── csv_reader.py
+│   │     ├── kafka_producer.py
+│   │     └── config.py
+│   │
+│   ├── preprocessing/
+│   │     ├── cleaner.py
+│   │     ├── config.py
+│   │     ├── kafka_consumer.py
+│   │     ├── kafka_producer.py
+│   │     ├── logger.py
+│   │     ├── requirements.txt
+│   │     ├── schema.py
+│   │     ├── service.py
+│   │     ├── validator.py
+│   │     └── test_kafka.py
+│   │
+│   ├── feature_selection/
+│   │
+│   ├── classification/
+│   │
+│   ├── threat_intelligence/
+│   │
+│   ├── adaptive_learning/
+│   │
+│   └── alert_service/
+│
+├── README.md
+├── LICENSE
+└── .gitignore
+```
+
+---
+
+# 💻 Installation Guide
+
+## Clone Repository
+
+```bash
+git clone https://github.com/Revaan23/IR-IDS-PROJECT-.git
+
+cd IR-IDS-PROJECT-
+```
+
+---
+
+## Create Virtual Environment
+
+Windows
+
+```bash
+python -m venv .venv
+
+.venv\Scripts\activate
+```
+
+Linux
+
+```bash
+python3 -m venv .venv
+
+source .venv/bin/activate
+```
+
+---
+
+## Install Dependencies
+
+### Preprocessing Service
+
+```bash
+cd services/preprocessing
+
+pip install -r requirements.txt
+```
+
+### Ingestion Service
+
+```bash
+cd ../ingestion
+
+pip install -r requirements.txt
+```
+
+---
+
+# 🐳 Docker Deployment
+
+Move into docker folder
+
+```bash
+cd docker
+```
+
+Start Kafka
+
+```bash
+docker compose up -d
+```
+
+Verify containers
+
+```bash
+docker ps
+```
+
+Expected Containers
+
+- Kafka Broker
+- Kafka UI
+
+---
+
+## Kafka UI
+
+Open
+
+```
+http://localhost:8080
+```
+
+---
+
+## Kafka Broker
+
+```
+localhost:9092
+```
+
+---
+
+# ▶️ Running the Project
+
+## Step 1
+
+Start Docker
+
+```bash
+docker compose up -d
+```
+
+---
+
+## Step 2
+
+Run Ingestion Service
+
+```bash
+cd services/ingestion
+
+python csv_reader.py
+```
+
+---
+
+## Step 3
+
+Run Preprocessing Service
+
+```bash
+cd services/preprocessing
+
+python service.py
+```
+
+---
+
+## Future Execution Flow
+
+```text
+Ingestion
+
+↓
+
+Preprocessing
+
+↓
+
+Feature Selection
+
+↓
+
+Classification
+
+↓
+
+Threat Intelligence
+
+↓
+
+Adaptive Learning
+
+↓
+
+Alert Service
+```
+
+---
+
+# 📊 Current Progress
+
+| Module | Status |
+|---------|--------|
+| Docker Infrastructure | ✅ Completed |
+| Kafka Integration | ✅ Completed |
+| Kafka UI | ✅ Completed |
+| CSV Ingestion | ✅ Completed |
+| Data Validation | ✅ Completed |
+| Data Cleaning | ✅ Completed |
+| Kafka Producer | ✅ Completed |
+| Kafka Consumer | ✅ Completed |
+| Logging System | ✅ Completed |
+| Feature Selection | 🚧 In Progress |
+| Model Training | ⏳ Pending |
+| Classification | ⏳ Pending |
+| Threat Intelligence | ⏳ Planned |
+| Adaptive Learning | ⏳ Planned |
+| Dashboard | ⏳ Planned |
+
+---
+
+# 🤖 Machine Learning Pipeline
+
+IR-IDS employs a hybrid machine learning framework that combines feature selection,
+explainable classification, unknown attack detection, and adaptive retraining.
+
+---
+
+## Pipeline Overview
+
+```text
+Historical Dataset
+        │
+        ▼
+Data Preprocessing
+        │
+        ▼
+Feature Engineering
+        │
+        ▼
+DG-CFS Feature Selection
+        │
+        ▼
+Train / Validation / Test Split
+        │
+        ▼
+Shapley Tree Classifier
+        │
+        ▼
+Confidence Score Evaluation
+        │
+ ┌──────┴─────────┐
+ │                │
+ ▼                ▼
+Known Attack   Unknown Attack
+ Detection        Detection
+                    │
+                    ▼
+               KAN-CVAE
+                    │
+                    ▼
+          Threat Intelligence
+                    │
+                    ▼
+          Adaptive Learning
+                    │
+                    ▼
+            Updated Model
+```
+
+---
+
+# 🧠 Machine Learning Components
+
+## 1️⃣ Data Preprocessing
+
+The preprocessing stage prepares raw traffic for downstream machine learning tasks.
+
+Operations include:
+
+- Data validation
+- Missing value handling
+- Null replacement
+- Infinite value replacement
+- Label normalization
+- Feature normalization
+- Schema validation
+
+---
+
+## 2️⃣ Feature Selection
+
+Algorithm
+
+**DG-CFS**
+
+(Dynamic Graph Causal Feature Selection)
+
+Purpose
+
+- Remove redundant features
+- Preserve causal relationships
+- Improve accuracy
+- Reduce training time
+- Reduce memory usage
+
+---
+
+## 3️⃣ Explainable Classification
+
+Model
+
+**Shapley Tree Classifier**
+
+Capabilities
+
+- Multi-class attack classification
+- Confidence score estimation
+- Explainable predictions
+- Feature importance analysis
+
+---
+
+## 4️⃣ Unknown Attack Detection
+
+Model
+
+**KAN-CVAE**
+
+(Kolmogorov-Arnold Network + Conditional Variational Autoencoder)
+
+Purpose
+
+- Detect zero-day attacks
+- Identify unseen attack patterns
+- Behavioural anomaly detection
+- Latent feature learning
+
+---
+
+## 5️⃣ Adaptive Learning
+
+Adaptive learning continuously improves the IDS using newly labelled traffic.
+
+Workflow
+
+- Merge historical datasets
+- Include verified unknown attacks
+- Retrain models
+- Register best-performing models
+- Deploy updated models
+
+---
+
+# 📊 Supported Datasets
+
+Current Development Dataset
+
+- Historical Network Traffic Dataset
+
+Future Supported Datasets
+
+- CICIDS2017
+- CICIDS2018
+- CSE-CIC-IDS2018
+- UNSW-NB15
+- TON-IoT
+- BoT-IoT
+- NSL-KDD
+
+---
+
+# 📈 Performance Goals
+
+The architecture has been designed with the following objectives.
+
+| Metric | Target |
+|---------|--------|
+| Throughput | High-Speed Kafka Streaming |
+| Processing Latency | Low Latency |
+| Detection Accuracy | >95% (Target) |
+| Unknown Attack Detection | Supported |
+| Scalability | Horizontal Scaling |
+| Availability | High Availability |
+| Fault Tolerance | Kafka Based |
+| Explainability | Integrated |
+
+---
+
+# 🛡️ Security Features
+
+IR-IDS provides several enterprise-grade security capabilities.
+
+### Network Monitoring
+
+- Continuous Traffic Analysis
+- Real-Time Packet Processing
+
+### Intrusion Detection
+
+- Known Attack Detection
+- Unknown Attack Detection
+
+### Threat Intelligence
+
+- IOC Database
+- Threat Enrichment
+- Analyst Feedback
+
+### Explainability
+
+- Feature Importance
+- Confidence Scores
+- Explainable Predictions
+
+### Adaptive Learning
+
+- Continuous Retraining
+- Model Versioning
+- Performance Monitoring
+
+---
+
+# 🚀 Future Enhancements
+
+The following improvements are planned for future releases.
+
+## Machine Learning
+
+- Ensemble Learning
+- Federated Learning
+- Graph Neural Networks
+- Transformer-Based IDS
+
+---
+
+## Infrastructure
+
+- Kubernetes Deployment
+- Multi-Broker Kafka Cluster
+- Redis Cache
+- Load Balancing
+
+---
+
+## Monitoring
+
+- Grafana Dashboard
+- Prometheus Metrics
+- ELK Stack Integration
+- OpenTelemetry
+
+---
+
+## Threat Intelligence
+
+- VirusTotal Integration
+- AbuseIPDB Integration
+- AlienVault OTX
+- MISP Integration
+
+---
+
+## Dashboard
+
+- Real-Time Analytics
+- Threat Visualization
+- Interactive Reports
+- Security Heatmaps
+
+---
+
+# 🗺️ Development Roadmap
+
+## Phase 1 — Infrastructure
+
+- [x] Project Initialization
+- [x] Docker Environment
+- [x] Apache Kafka Setup
+- [x] Kafka UI
+- [x] CSV Ingestion
+- [x] Kafka Producer
+- [x] Kafka Consumer
+
+---
+
+## Phase 2 — Data Processing
+
+- [x] Data Validation
+- [x] Data Cleaning
+- [x] Schema Validation
+- [x] Logging Framework
+- [x] Preprocessing Service
+
+---
+
+## Phase 3 — Machine Learning
+
+- [ ] Feature Engineering
+- [ ] DG-CFS Implementation
+- [ ] Model Training
+- [ ] Model Evaluation
+- [ ] Model Registry
+
+---
+
+## Phase 4 — Detection
+
+- [ ] Classification Service
+- [ ] Confidence Estimation
+- [ ] Unknown Attack Detection
+- [ ] Threat Intelligence
+- [ ] Adaptive Learning
+
+---
+
+## Phase 5 — Visualization
+
+- [ ] Alert Dashboard
+- [ ] Threat Dashboard
+- [ ] Performance Dashboard
+- [ ] System Monitoring
+
+---
+
+# 📚 References
+
+This project is inspired by research in:
+
+- Network Intrusion Detection Systems
+- Explainable Artificial Intelligence (XAI)
+- Apache Kafka Event Streaming
+- Distributed Microservices
+- Threat Intelligence Platforms
+- Adaptive Machine Learning
+
+---
+
+# 🤝 Contribution Guidelines
+
+We welcome contributions to improve IR-IDS.
+
+To contribute:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Implement your changes.
+4. Commit with meaningful messages.
+5. Push to your fork.
+6. Open a Pull Request.
+
+Please ensure that:
+
+- Code follows project conventions.
+- New features include documentation.
+- Existing functionality is not broken.
+- Changes are tested before submission.
+
+---
+
+# 👨‍💻 Contributors
+
+| Name | Role | Responsibilities |
+|------|------|------------------|
+| **Revaan J R** | Team Lead | System Architecture, Kafka Integration, Backend Development, Project Coordination |
+| **Member 2** | Machine Learning Engineer | Feature Selection, Model Training, Evaluation |
+| **Member 3** | AI Engineer | Unknown Attack Detection, Adaptive Learning |
+| **Member 4** | Full Stack Developer | Dashboard, Alert Service, Visualization |
+
+---
+
+# 📜 License
+
+This project is developed as part of a **Bachelor of Technology (Artificial Intelligence and Data Science)** Final Year Project.
+
+Licensed under the **MIT License**.
+
+See the `LICENSE` file for more details.
+
+---
+
+# 🙏 Acknowledgements
+
+The authors would like to acknowledge:
+
+- Apache Kafka
+- Docker
+- Python Community
+- Scikit-learn
+- TensorFlow
+- Pandas
+- NumPy
+- Open Source Community
+
+for providing the tools and technologies that made this project possible.
+
+---
+
+# ⭐ Support the Project
+
+If you found this project useful:
+
+⭐ Star the repository
+
+🍴 Fork the repository
+
+🐛 Report issues
+
+💡 Suggest new features
+
+🤝 Contribute to development
+
+---
+
+<div align="center">
+
+## 🛡️ IR-IDS
+
+### Intelligent Real-Time Intrusion Detection System
+
+**Building Intelligent, Explainable and Adaptive Cyber Defense Systems**
+
+Made with ❤️ by the **IR-IDS Development Team**
+
+</div>
+
+
+====================================================
+File: C:\IDS\reduce_dataset.py
+====================================================
+"""
+reduce_dataset.py
+-----------------
+Creates a lightweight development dataset.
+
+If a CSV contains more than 50,000 rows,
+only the first 50,000 rows are copied.
+
+Otherwise the whole file is copied.
+
+Uses Python's built-in CSV reader.
+"""
+
+from pathlib import Path
+import csv
+
+# =====================================================
+# CONFIGURATION
+# =====================================================
+
+SOURCE_FOLDER = Path("datasets/raw/CSE-CIC-IDS2018")
+
+DESTINATION_FOLDER = Path(
+    "datasets/raw/CSE-CIC-IDS2018-50K"
+)
+
+MAX_ROWS = 50000
+
+DESTINATION_FOLDER.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+# =====================================================
+
+print("=" * 70)
+print("IR-IDS Development Dataset Generator")
+print("=" * 70)
+
+csv_files = sorted(
+    SOURCE_FOLDER.glob("*.csv")
+)
+
+for csv_file in csv_files:
+
+    print(f"\nProcessing : {csv_file.name}")
+
+    output_file = DESTINATION_FOLDER / csv_file.name
+
+    rows_written = 0
+
+    with open(
+        csv_file,
+        "r",
+        encoding="utf-8",
+        errors="ignore",
+        newline=""
+    ) as infile, open(
+        output_file,
+        "w",
+        encoding="utf-8",
+        newline=""
+    ) as outfile:
+
+        reader = csv.reader(infile)
+        writer = csv.writer(outfile)
+
+        # Write header
+        header = next(reader)
+        writer.writerow(header)
+
+        for row in reader:
+
+            writer.writerow(row)
+
+            rows_written += 1
+
+            if rows_written >= MAX_ROWS:
+                break
+
+    print(f"Saved : {rows_written:,} rows")
+
+print("\n" + "=" * 70)
+print("Development Dataset Created Successfully")
+print("=" * 70)
+
+print(f"\nLocation : {DESTINATION_FOLDER}")
+
+====================================================
+File: C:\IDS\docker\docker-compose.yml
+====================================================
+services:
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    hostname: kafka
+
+    ports:
+      - "9092:9092"
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: Local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+volumes:
+  kafka-data:
+
+====================================================
+File: C:\IDS\services\ingestion\checkpoint.py
+====================================================
+"""
+checkpoint.py
+-------------
+Enterprise Checkpoint Manager
+
+Features
+--------
+✓ Automatic checkpoint creation
+✓ Safe loading
+✓ Atomic writes
+✓ Corruption recovery
+✓ Reset support
+"""
+
+import json
+import tempfile
+from pathlib import Path
+from datetime import datetime
+
+from config import (
+    CHECKPOINT_FOLDER,
+    CHECKPOINT_FILE
+)
+
+
+class CheckpointManager:
+
+    def __init__(self):
+
+        CHECKPOINT_FOLDER.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        if not CHECKPOINT_FILE.exists():
+            self.reset()
+
+    # ==========================================================
+    # Save Checkpoint
+    # ==========================================================
+
+    def save(
+        self,
+        file_name: str,
+        chunk: int,
+        records_sent: int
+    ):
+
+        checkpoint = {
+
+            "file": file_name,
+
+            "chunk": chunk,
+
+            "records_sent": records_sent,
+
+            "timestamp": datetime.now().isoformat()
+
+        }
+
+        temp_file = CHECKPOINT_FILE.with_suffix(".tmp")
+
+        with open(
+            temp_file,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                checkpoint,
+                f,
+                indent=4
+            )
+
+        temp_file.replace(CHECKPOINT_FILE)
+
+    # ==========================================================
+    # Load Checkpoint
+    # ==========================================================
+
+    def load(self):
+
+        if not CHECKPOINT_FILE.exists():
+            return None
+
+        try:
+
+            with open(
+                CHECKPOINT_FILE,
+                "r",
+                encoding="utf-8"
+            ) as f:
+
+                checkpoint = json.load(f)
+
+            if not checkpoint:
+                return None
+
+            return checkpoint
+
+        except Exception:
+
+            return None
+
+    # ==========================================================
+    # Reset Checkpoint
+    # ==========================================================
+
+    def reset(self):
+
+        with open(
+            CHECKPOINT_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                {},
+                f,
+                indent=4
+            )
+
+    # ==========================================================
+    # Delete Checkpoint
+    # ==========================================================
+
+    def delete(self):
+
+        if CHECKPOINT_FILE.exists():
+            CHECKPOINT_FILE.unlink()
+
+    # ==========================================================
+    # Exists
+    # ==========================================================
+
+    def exists(self):
+
+        return CHECKPOINT_FILE.exists()
+
+====================================================
+File: C:\IDS\services\ingestion\config.py
+====================================================
+"""
+config.py
+---------
+Enterprise Configuration for the IR-IDS Ingestion Service
+"""
+
+from pathlib import Path
+
+# =============================================================================
+# Project Paths
+# =============================================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# =============================================================================
+# Dataset Configuration
+# =============================================================================
+
+# Development Dataset
+DATASET_FOLDER = PROJECT_ROOT / "datasets" / "raw" / "CSE-CIC-IDS2018-50K"
+
+# Production Dataset (Uncomment when required)
+# DATASET_FOLDER = PROJECT_ROOT / "datasets" / "raw" / "CSE-CIC-IDS2018"
+
+# =============================================================================
+# Kafka Configuration
+# =============================================================================
+
+BOOTSTRAP_SERVER = "localhost:9092"
+
+TOPIC_NAME = "raw-traffic"
+
+CLIENT_ID = "ir-ids-producer"
+
+# =============================================================================
+# Kafka Producer Performance
+# =============================================================================
+
+# Number of messages accumulated before sending
+BATCH_SIZE = 131072          # 128 KB
+
+# Wait up to 50ms to build larger batches
+LINGER_MS = 50
+
+# Kafka Producer Buffer (64 MB)
+BUFFER_MEMORY = 67108864
+
+# Compression (fast + smaller network traffic)
+COMPRESSION_TYPE = "gzip"
+
+# Number of retries
+MAX_RETRIES = 3
+
+# Retry delay
+RETRY_DELAY = 2
+
+# Fast acknowledgements
+ACKS = 1
+
+# Maximum in-flight requests
+MAX_IN_FLIGHT = 5
+
+# =============================================================================
+# CSV Reader
+# =============================================================================
+
+# Increase for better throughput
+CHUNK_SIZE = 20000
+
+CSV_ENCODING = "utf-8"
+
+# =============================================================================
+# Checkpoint
+# =============================================================================
+
+CHECKPOINT_FOLDER = Path(__file__).parent / "checkpoints"
+
+CHECKPOINT_FILE = CHECKPOINT_FOLDER / "checkpoint.json"
+
+# Save checkpoint every 20k records
+SAVE_CHECKPOINT_EVERY = 20000
+
+# =============================================================================
+# Logging
+# =============================================================================
+
+LOG_FOLDER = Path(__file__).parent / "logs"
+
+LOG_FILE = LOG_FOLDER / "ingestion.log"
+
+LOG_LEVEL = "INFO"
+
+# =============================================================================
+# Progress
+# =============================================================================
+
+SHOW_PROGRESS = True
+
+SHOW_RECORD_RATE = True
+
+# =============================================================================
+# Statistics
+# =============================================================================
+
+PRINT_SUMMARY = True
+
+====================================================
+File: C:\IDS\services\ingestion\csv_reader.py
+====================================================
+"""
+csv_reader.py
+-------------
+Enterprise CSV Reader
+
+Features
+--------
+✓ Memory Efficient
+✓ Chunk Streaming
+✓ Resume from Checkpoint
+✓ Progress Display
+✓ Exception Handling
+✓ Fast Iteration
+"""
+
+from pathlib import Path
+import pandas as pd
+
+from config import (
+    CHUNK_SIZE,
+    CSV_ENCODING
+)
+
+from checkpoint import CheckpointManager
+from logger import IDSLogger
+
+
+class CSVReader:
+
+    def __init__(self, dataset_folder):
+
+        self.dataset_folder = Path(dataset_folder)
+
+        self.logger = IDSLogger().get_logger()
+
+        self.checkpoint = CheckpointManager()
+
+    # ==========================================================
+    # Locate CSV Files
+    # ==========================================================
+
+    def get_csv_files(self):
+
+        csv_files = sorted(
+            self.dataset_folder.rglob("*.csv")
+        )
+
+        if not csv_files:
+
+            raise FileNotFoundError(
+                f"No CSV files found in\n{self.dataset_folder}"
+            )
+
+        return csv_files
+
+    # ==========================================================
+    # Stream Records
+    # ==========================================================
+
+    def read_rows(self):
+
+        csv_files = self.get_csv_files()
+
+        checkpoint = self.checkpoint.load()
+
+        resume_file = None
+        resume_chunk = 0
+
+        if checkpoint:
+
+            resume_file = checkpoint.get("file")
+
+            resume_chunk = checkpoint.get("chunk", 0)
+
+            self.logger.info("Checkpoint Found")
+
+            self.logger.info(
+                f"Resuming File : {resume_file}"
+            )
+
+            self.logger.info(
+                f"Resume Chunk  : {resume_chunk}"
+            )
+
+        resume_mode = resume_file is not None
+
+        # ======================================================
+
+        for csv_file in csv_files:
+
+            file_name = csv_file.name
+
+            if resume_mode:
+
+                if file_name != resume_file:
+                    continue
+
+                resume_mode = False
+
+            print(f"\nReading : {file_name}")
+
+            self.logger.info(
+                f"Reading {file_name}"
+            )
+
+            try:
+
+                chunk_iterator = pd.read_csv(
+                    csv_file,
+                    chunksize=CHUNK_SIZE,
+                    low_memory=False,
+                    encoding=CSV_ENCODING
+                )
+
+            except Exception as e:
+
+                self.logger.error(str(e))
+                continue
+
+            for chunk_number, chunk in enumerate(chunk_iterator):
+
+                if (
+                    file_name == resume_file
+                    and chunk_number < resume_chunk
+                ):
+                    continue
+
+                # ==================================================
+                # Replace NaN / NaT with Python None
+                # (Compatible with Pandas 2.x / 3.x)
+                # ==================================================
+
+                chunk = chunk.where(pd.notna(chunk), None)
+
+                # ==================================================
+                # Faster than to_dict(orient="records")
+                # ==================================================
+
+                columns = chunk.columns.tolist()
+
+                values = chunk.values.tolist()
+
+                for row_number, row_values in enumerate(values):
+
+                    row = dict(
+                        zip(
+                            columns,
+                            row_values
+                        )
+                    )
+
+                    yield (
+                        file_name,
+                        chunk_number,
+                        row_number,
+                        row
+                    )
+
+        self.logger.info(
+            "CSV Streaming Finished"
+        )
+
+====================================================
+File: C:\IDS\services\ingestion\kafka_producer.py
+====================================================
+"""
+kafka_producer.py
+-----------------
+High Performance Kafka Producer
+Compatible with kafka-python
+"""
+
+import json
+
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+from config import (
+    MAX_RETRIES,
+    RETRY_DELAY,
+    BATCH_SIZE,
+    LINGER_MS,
+    COMPRESSION_TYPE,
+    ACKS,
+    MAX_IN_FLIGHT
+)
+
+from logger import IDSLogger
+
+
+class IDSKafkaProducer:
+
+    def __init__(
+        self,
+        bootstrap_server: str,
+        topic: str
+    ):
+
+        self.topic = topic
+
+        self.logger = IDSLogger().get_logger()
+
+        self.messages_sent = 0
+        self.failed_messages = 0
+
+        self.logger.info(
+            f"Connecting to Kafka ({bootstrap_server})..."
+        )
+
+        self.producer = KafkaProducer(
+
+            bootstrap_servers=bootstrap_server,
+
+            value_serializer=lambda message:
+            json.dumps(
+                message,
+                default=str
+            ).encode("utf-8"),
+
+            # ==================================================
+            # Performance Settings
+            # ==================================================
+
+            batch_size=BATCH_SIZE,
+
+            linger_ms=LINGER_MS,
+
+            compression_type=COMPRESSION_TYPE,
+
+            retries=MAX_RETRIES,
+
+            retry_backoff_ms=RETRY_DELAY * 1000,
+
+            acks=ACKS,
+
+            max_in_flight_requests_per_connection=MAX_IN_FLIGHT,
+
+            max_request_size=10 * 1024 * 1024,
+
+            max_block_ms=60000
+
+        )
+
+        print(f"✅ Connected to Kafka Broker ({bootstrap_server})")
+
+        self.logger.info("Kafka Producer Connected.")
+
+    # ======================================================
+    # Success Callback
+    # ======================================================
+
+    def _on_success(self, metadata):
+
+        self.messages_sent += 1
+
+    # ======================================================
+    # Error Callback
+    # ======================================================
+
+    def _on_error(self, exception):
+
+        self.failed_messages += 1
+
+        self.logger.error(
+            f"Kafka Error : {exception}"
+        )
+
+    # ======================================================
+    # Send Message (ASYNC)
+    # ======================================================
+
+    def send(
+        self,
+        message: dict
+    ):
+
+        try:
+
+            future = self.producer.send(
+                self.topic,
+                value=message
+            )
+
+            future.add_callback(self._on_success)
+
+            future.add_errback(self._on_error)
+
+            return True
+
+        except KafkaError as e:
+
+            self.failed_messages += 1
+
+            self.logger.error(str(e))
+
+            return False
+
+    # ======================================================
+    # Flush Producer
+    # ======================================================
+
+    def flush(self):
+
+        self.producer.flush()
+
+    # ======================================================
+    # Statistics
+    # ======================================================
+
+    def statistics(self):
+
+        return {
+            "messages_sent": self.messages_sent,
+            "failed_messages": self.failed_messages
+        }
+
+    # ======================================================
+    # Close Producer
+    # ======================================================
+
+    def close(self):
+
+        try:
+
+            self.producer.flush()
+
+            self.producer.close()
+
+            stats = self.statistics()
+
+            self.logger.info(
+                f"Producer Closed | Sent: {stats['messages_sent']:,} | Failed: {stats['failed_messages']:,}"
+            )
+
+        except Exception as e:
+
+            self.logger.error(
+                f"Close Error : {e}"
+            )
+
+====================================================
+File: C:\IDS\services\ingestion\logger.py
+====================================================
+"""
+logger.py
+---------
+Enterprise Logging Utility
+"""
+
+import logging
+from logging.handlers import RotatingFileHandler
+
+from config import (
+    LOG_FOLDER,
+    LOG_FILE,
+    LOG_LEVEL
+)
+
+
+class IDSLogger:
+
+    _instance = None
+
+    def __new__(cls):
+
+        if cls._instance is None:
+
+            cls._instance = super().__new__(cls)
+
+            cls._instance._initialize()
+
+        return cls._instance
+
+    def _initialize(self):
+
+        LOG_FOLDER.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        self.logger = logging.getLogger("IR-IDS")
+
+        self.logger.setLevel(getattr(logging, LOG_LEVEL))
+
+        # Avoid duplicate handlers
+        if self.logger.handlers:
+            return
+
+        formatter = logging.Formatter(
+
+            "%(asctime)s | %(levelname)-8s | %(message)s",
+
+            "%Y-%m-%d %H:%M:%S"
+
+        )
+
+        # =====================================
+        # Console Logger
+        # =====================================
+
+        console = logging.StreamHandler()
+
+        console.setFormatter(formatter)
+
+        self.logger.addHandler(console)
+
+        # =====================================
+        # Rotating File Logger
+        # =====================================
+
+        file_handler = RotatingFileHandler(
+
+            LOG_FILE,
+
+            maxBytes=5 * 1024 * 1024,
+
+            backupCount=5,
+
+            encoding="utf-8"
+
+        )
+
+        file_handler.setFormatter(formatter)
+
+        self.logger.addHandler(file_handler)
+
+    def get_logger(self):
+
+        return self.logger
+
+====================================================
+File: C:\IDS\services\ingestion\producer.py
+====================================================
+"""
+producer.py
+-----------
+Enterprise IR-IDS Dataset Ingestion Service
+
+Features
+--------
+✓ Async Kafka Streaming
+✓ Checkpoint Resume
+✓ Graceful Shutdown
+✓ Progress Bar
+✓ ETA
+✓ Records/sec
+✓ Logging
+✓ Automatic Retry
+"""
+
+import signal
+import sys
+import time
+
+from tqdm import tqdm
+
+from config import (
+    BOOTSTRAP_SERVER,
+    TOPIC_NAME,
+    DATASET_FOLDER,
+    SAVE_CHECKPOINT_EVERY
+)
+
+from csv_reader import CSVReader
+from kafka_producer import IDSKafkaProducer
+from checkpoint import CheckpointManager
+from logger import IDSLogger
+
+
+logger = IDSLogger().get_logger()
+
+checkpoint = CheckpointManager()
+
+producer = None
+
+last_file = None
+last_chunk = 0
+records_sent = 0
+
+start_time = None
+
+
+# ==========================================================
+# Graceful Shutdown
+# ==========================================================
+
+def shutdown_handler(sig, frame):
+
+    global producer
+    global last_file
+    global last_chunk
+    global records_sent
+
+    print()
+
+    logger.info("Ctrl+C Detected")
+
+    print("Saving checkpoint...")
+
+    checkpoint.save(
+        file_name=last_file,
+        chunk=last_chunk,
+        records_sent=records_sent
+    )
+
+    logger.info("Checkpoint Saved")
+
+    if producer:
+
+        producer.flush()
+
+        producer.close()
+
+    print("Checkpoint Saved.")
+    print("Producer Closed.")
+    print("Goodbye.")
+
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, shutdown_handler)
+
+
+# ==========================================================
+# Main
+# ==========================================================
+
+def main():
+
+    global producer
+    global last_file
+    global last_chunk
+    global records_sent
+    global start_time
+
+    print("=" * 70)
+    print("IR-IDS Dataset Ingestion Service")
+    print("=" * 70)
+
+    print(f"Dataset : {DATASET_FOLDER}")
+    print(f"Kafka   : {BOOTSTRAP_SERVER}")
+    print(f"Topic   : {TOPIC_NAME}")
+    print()
+
+    logger.info("Starting Ingestion Service")
+
+    start_time = time.time()
+
+    reader = CSVReader(DATASET_FOLDER)
+
+    producer = IDSKafkaProducer(
+        BOOTSTRAP_SERVER,
+        TOPIC_NAME
+    )
+
+    progress = tqdm(
+        desc="Streaming Records",
+        unit="records"
+    )
+
+    try:
+
+        for (
+            file_name,
+            chunk_number,
+            row_number,
+            row
+        ) in reader.read_rows():
+
+            # Async send
+            producer.send(row)
+
+            records_sent += 1
+
+            last_file = file_name
+            last_chunk = chunk_number
+
+            progress.update(1)
+
+            # Save checkpoint every N records
+            if records_sent % SAVE_CHECKPOINT_EVERY == 0:
+
+                producer.flush()
+
+                checkpoint.save(
+                    file_name=file_name,
+                    chunk=chunk_number,
+                    records_sent=records_sent
+                )
+
+                elapsed = time.time() - start_time
+
+                rate = (
+                    records_sent / elapsed
+                    if elapsed > 0
+                    else 0
+                )
+
+                logger.info(
+                    f"Checkpoint Saved ({records_sent:,} records)"
+                )
+
+                logger.info(
+                    f"Speed : {rate:.2f} records/sec"
+                )
+                        # ======================================================
+        # End of Streaming
+        # ======================================================
+
+        producer.flush()
+
+        checkpoint.reset()
+
+        logger.info(
+            "Final Kafka Flush Completed"
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            f"Unexpected Error : {e}"
+        )
+
+        checkpoint.save(
+
+            file_name=last_file,
+
+            chunk=last_chunk,
+
+            records_sent=records_sent
+
+        )
+
+        if producer is not None:
+
+            producer.flush()
+
+            producer.close()
+
+        raise
+
+    finally:
+
+        progress.close()
+
+        if producer is not None:
+
+            producer.close()
+
+    # ======================================================
+    # Statistics
+    # ======================================================
+
+    elapsed = time.time() - start_time
+
+    speed = (
+
+        records_sent / elapsed
+
+        if elapsed > 0
+
+        else 0
+
+    )
+
+    print()
+
+    print("=" * 70)
+
+    print("INGESTION COMPLETED")
+
+    print("=" * 70)
+
+    print(f"Dataset            : {DATASET_FOLDER}")
+
+    print(f"Records Streamed   : {records_sent:,}")
+
+    print(f"Elapsed Time       : {elapsed:.2f} sec")
+
+    print(f"Average Speed      : {speed:.2f} records/sec")
+
+    print("=" * 70)
+
+    logger.info(
+
+        "========================================"
+
+    )
+
+    logger.info(
+
+        "INGESTION COMPLETED"
+
+    )
+
+    logger.info(
+
+        f"Records : {records_sent:,}"
+
+    )
+
+    logger.info(
+
+        f"Elapsed : {elapsed:.2f} sec"
+
+    )
+
+    logger.info(
+
+        f"Average : {speed:.2f} records/sec"
+
+    )
+
+    logger.info(
+
+        "========================================"
+
+    )
+
+
+# ==========================================================
+# Entry Point
+# ==========================================================
+
+if __name__ == "__main__":
+
+    try:
+
+        main()
+
+    except KeyboardInterrupt:
+
+        shutdown_handler(None, None)
+
+====================================================
+File: C:\IDS\services\ingestion\README.md
+====================================================
+
+====================================================
+File: C:\IDS\services\ingestion\test_csv_reader.py
+====================================================
+from config import DATASET_FOLDER
+from csv_reader import CSVReader
+
+reader = CSVReader(DATASET_FOLDER)
+
+for file_name, chunk, row_number, row in reader.read_rows():
+
+    print(file_name)
+    print(chunk)
+    print(row_number)
+    print(row)
+
+    break
+
+====================================================
+File: C:\IDS\services\ingestion\test_kafka_producer.py
+====================================================
+from config import (
+    BOOTSTRAP_SERVER,
+    TOPIC_NAME
+)
+
+from kafka_producer import IDSKafkaProducer
+
+
+producer = IDSKafkaProducer(
+    BOOTSTRAP_SERVER,
+    TOPIC_NAME
+)
+
+producer.send({
+
+    "message": "Kafka Test",
+
+    "status": "working"
+
+})
+
+producer.flush()
+
+producer.close()
+
+print("✅ Kafka Producer Test Passed")
+
+====================================================
+File: C:\IDS\services\preprocessing\cleaner.py
+====================================================
+"""
+cleaner.py
+----------
+High Performance Data Cleaner for IR-IDS
+"""
+
+import math
+from typing import Dict, Any
+
+from config import (
+    REPLACE_NULL_WITH,
+    REPLACE_INFINITY_WITH,
+    TRIM_WHITESPACE,
+    NORMALIZE_COLUMN_NAMES,
+    NORMALIZE_LABELS,
+)
+
+from schema import (
+    COLUMN_MAPPING,
+    NUMERIC_COLUMNS,
+    LABEL_MAPPING,
+)
+
+
+class DataCleaner:
+
+    def __init__(self):
+
+        self.cleaned_records = 0
+
+        # Convert to set for O(1) lookups
+        self.numeric_columns = set(NUMERIC_COLUMNS)
+
+    # ==========================================================
+    # Complete Cleaning Pipeline (Single Pass)
+    # ==========================================================
+
+    def clean_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+
+        cleaned = {}
+
+        for key, value in record.items():
+
+            # -------------------------------
+            # Normalize column names
+            # -------------------------------
+
+            if NORMALIZE_COLUMN_NAMES:
+                key = COLUMN_MAPPING.get(key, key)
+
+            # -------------------------------
+            # Handle NULL
+            # -------------------------------
+
+            if value is None:
+                value = REPLACE_NULL_WITH
+
+            # -------------------------------
+            # Trim strings
+            # -------------------------------
+
+            elif TRIM_WHITESPACE and isinstance(value, str):
+                value = value.strip()
+
+            # -------------------------------
+            # Numeric conversion
+            # -------------------------------
+
+            if key in self.numeric_columns:
+
+                try:
+
+                    value = float(value)
+
+                    if math.isnan(value):
+                        value = REPLACE_NULL_WITH
+
+                    elif math.isinf(value):
+                        value = REPLACE_INFINITY_WITH
+
+                except Exception:
+
+                    value = REPLACE_NULL_WITH
+
+            cleaned[key] = value
+
+        # -------------------------------
+        # Normalize Label
+        # -------------------------------
+
+        if NORMALIZE_LABELS:
+
+            if "label" in cleaned:
+
+                label = str(cleaned["label"]).strip()
+
+                cleaned["label"] = LABEL_MAPPING.get(
+                    label,
+                    label.upper()
+                )
+
+            elif "Label" in cleaned:
+
+                label = str(cleaned["Label"]).strip()
+
+                cleaned["Label"] = LABEL_MAPPING.get(
+                    label,
+                    label.upper()
+                )
+
+        self.cleaned_records += 1
+
+        return cleaned
+
+    # ==========================================================
+
+    def get_statistics(self):
+
+        return {
+            "cleaned_records": self.cleaned_records
+        }
+
+    # ==========================================================
+
+    def reset_statistics(self):
+
+        self.cleaned_records = 0
+
+====================================================
+File: C:\IDS\services\preprocessing\config.py
+====================================================
+"""
+config.py
+---------
+Enterprise Configuration for the IR-IDS Preprocessing Service
+Compatible with kafka-python 2.2.15
+"""
+
+from pathlib import Path
+
+# =============================================================================
+# Project Paths
+# =============================================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+SERVICE_ROOT = Path(__file__).parent
+
+LOG_FOLDER = SERVICE_ROOT / "logs"
+
+LOG_FILE = LOG_FOLDER / "preprocessing.log"
+
+# =============================================================================
+# Kafka Consumer
+# =============================================================================
+
+BOOTSTRAP_SERVER = "localhost:9092"
+
+INPUT_TOPIC = "raw-traffic"
+
+CONSUMER_GROUP = "preprocessing-service-v2"
+
+AUTO_OFFSET_RESET = "earliest"
+
+ENABLE_AUTO_COMMIT = False
+
+# Consumer Poll Settings
+MAX_POLL_RECORDS = 500
+
+POLL_TIMEOUT_MS = 1000
+
+SESSION_TIMEOUT_MS = 30000
+
+HEARTBEAT_INTERVAL_MS = 3000
+
+# =============================================================================
+# Kafka Producer
+# =============================================================================
+
+OUTPUT_TOPIC = "clean-traffic"
+
+CLIENT_ID = "preprocessing-producer"
+
+# Producer Reliability
+ACKS = 1
+
+MAX_RETRIES = 20
+
+RETRY_BACKOFF_MS = 1000
+
+# Compression
+COMPRESSION_TYPE = "lz4"
+
+# Producer Batching
+BATCH_SIZE = 262144          # 256 KB
+
+LINGER_MS = 20
+
+MAX_IN_FLIGHT = 5
+
+BUFFER_MEMORY = 268435456    # 256 MB
+
+# Producer Timeouts
+REQUEST_TIMEOUT_MS = 120000
+
+# IMPORTANT:
+# Must be greater than REQUEST_TIMEOUT_MS + LINGER_MS
+DELIVERY_TIMEOUT_MS = 180000
+
+MAX_BLOCK_MS = 30000
+
+# =============================================================================
+# Validation
+# =============================================================================
+
+REQUIRED_COLUMNS = [
+    "Label"
+]
+
+DROP_INVALID_RECORDS = True
+
+# =============================================================================
+# Cleaning
+# =============================================================================
+
+REPLACE_NULL_WITH = 0
+
+REPLACE_INFINITY_WITH = 0
+
+TRIM_WHITESPACE = True
+
+NORMALIZE_COLUMN_NAMES = True
+
+NORMALIZE_LABELS = True
+
+# =============================================================================
+# Schema
+# =============================================================================
+
+NUMERIC_COLUMNS = [
+
+    "Dst Port",
+    "Protocol",
+    "Flow Duration",
+    "Tot Fwd Pkts",
+    "Tot Bwd Pkts",
+    "TotLen Fwd Pkts",
+    "TotLen Bwd Pkts",
+    "Flow Byts/s",
+    "Flow Pkts/s",
+    "Flow IAT Mean",
+    "Flow IAT Std",
+    "Flow IAT Max",
+    "Flow IAT Min"
+
+]
+
+# =============================================================================
+# Statistics
+# =============================================================================
+
+PRINT_STATS_EVERY = 5000
+
+# Flush producer every N records
+FLUSH_INTERVAL = 5000
+
+# =============================================================================
+# Logging
+# =============================================================================
+
+LOG_LEVEL = "INFO"
+
+LOG_FORMAT = (
+    "%(asctime)s | "
+    "%(levelname)-8s | "
+    "%(message)s"
+)
+
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+====================================================
+File: C:\IDS\services\preprocessing\kafka_consumer.py
+====================================================
+"""
+kafka_consumer.py
+-----------------
+High Performance Kafka Consumer
+Compatible with kafka-python 2.2.15
+"""
+
+import json
+import time
+
+from kafka import KafkaConsumer, TopicPartition
+from kafka.errors import KafkaError
+
+from config import (
+    BOOTSTRAP_SERVER,
+    INPUT_TOPIC,
+    AUTO_OFFSET_RESET,
+    ENABLE_AUTO_COMMIT,
+    MAX_POLL_RECORDS,
+    POLL_TIMEOUT_MS,
+    SESSION_TIMEOUT_MS,
+    HEARTBEAT_INTERVAL_MS,
+)
+
+from logger import IDSLogger
+
+
+class PreprocessingConsumer:
+
+    def __init__(self):
+
+        self.logger = IDSLogger().get_logger()
+
+        self.running = True
+
+        self.consumer = KafkaConsumer(
+
+            bootstrap_servers=BOOTSTRAP_SERVER,
+
+            enable_auto_commit=ENABLE_AUTO_COMMIT,
+
+            auto_offset_reset=AUTO_OFFSET_RESET,
+
+            max_poll_records=MAX_POLL_RECORDS,
+
+            session_timeout_ms=SESSION_TIMEOUT_MS,
+
+            heartbeat_interval_ms=HEARTBEAT_INTERVAL_MS,
+
+            consumer_timeout_ms=1000,
+
+            request_timeout_ms=120000,
+
+            reconnect_backoff_ms=1000,
+
+            reconnect_backoff_max_ms=10000,
+
+            value_deserializer=lambda x: json.loads(
+                x.decode("utf-8")
+            )
+
+        )
+
+        # ==========================================================
+        # Manual Partition Assignment
+        # ==========================================================
+
+        tp = TopicPartition(INPUT_TOPIC, 0)
+
+        self.consumer.assign([tp])
+
+        self.consumer.seek_to_beginning(tp)
+
+        self.logger.info("=" * 70)
+        self.logger.info(f"Connected to Kafka Topic : {INPUT_TOPIC}")
+        self.logger.info("Consumer Started Successfully")
+        self.logger.info("=" * 70)
+
+    # ==========================================================
+    # Consume
+    # ==========================================================
+
+    def consume(self):
+
+        while self.running:
+
+            try:
+
+                batches = self.consumer.poll(
+
+                    timeout_ms=POLL_TIMEOUT_MS,
+
+                    max_records=MAX_POLL_RECORDS
+
+                )
+
+                if not batches:
+                    continue
+
+                for _, messages in batches.items():
+
+                    for message in messages:
+
+                        yield message.value
+
+            except KafkaError as e:
+
+                self.logger.error(
+                    f"Kafka Consumer Error : {e}"
+                )
+
+                time.sleep(2)
+
+            except Exception as e:
+
+                self.logger.exception(
+                    f"Unexpected Consumer Error : {e}"
+                )
+
+                time.sleep(2)
+
+    # ==========================================================
+    # Close
+    # ==========================================================
+
+    def close(self):
+
+        self.running = False
+
+        try:
+
+            self.consumer.close()
+
+            self.logger.info(
+                "Kafka Consumer Closed Successfully."
+            )
+
+        except Exception as e:
+
+            self.logger.exception(
+                f"Consumer Close Error : {e}"
+            )
+
+====================================================
+File: C:\IDS\services\preprocessing\kafka_producer.py
+====================================================
+"""
+kafka_producer.py
+-----------------
+Enterprise Kafka Producer
+Compatible with kafka-python 2.2.15
+"""
+
+import json
+
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+from config import (
+    BOOTSTRAP_SERVER,
+    OUTPUT_TOPIC,
+    CLIENT_ID,
+    ACKS,
+    MAX_RETRIES,
+    COMPRESSION_TYPE,
+    BATCH_SIZE,
+    LINGER_MS,
+    MAX_IN_FLIGHT,
+    BUFFER_MEMORY,
+    REQUEST_TIMEOUT_MS,
+    DELIVERY_TIMEOUT_MS,
+    MAX_BLOCK_MS,
+    RETRY_BACKOFF_MS,
+    PRINT_STATS_EVERY,
+)
+
+from logger import IDSLogger
+
+
+class PreprocessingProducer:
+
+    def __init__(self):
+
+        self.logger = IDSLogger().get_logger()
+
+        self.sent_records = 0
+        self.success_records = 0
+        self.failed_records = 0
+
+        producer_config = {
+
+            "bootstrap_servers": BOOTSTRAP_SERVER,
+
+            "client_id": CLIENT_ID,
+
+            "acks": ACKS,
+
+            "retries": MAX_RETRIES,
+
+            "retry_backoff_ms": RETRY_BACKOFF_MS,
+
+            "batch_size": BATCH_SIZE,
+
+            "linger_ms": LINGER_MS,
+
+            "buffer_memory": BUFFER_MEMORY,
+
+            "request_timeout_ms": REQUEST_TIMEOUT_MS,
+
+            "delivery_timeout_ms": DELIVERY_TIMEOUT_MS,
+
+            "max_block_ms": MAX_BLOCK_MS,
+
+            "max_in_flight_requests_per_connection": MAX_IN_FLIGHT,
+
+            "value_serializer": lambda x: json.dumps(x).encode("utf-8"),
+        }
+
+        if COMPRESSION_TYPE:
+            producer_config["compression_type"] = COMPRESSION_TYPE
+
+        self.producer = KafkaProducer(**producer_config)
+
+        self.logger.info("=" * 70)
+        self.logger.info(f"Connected to Kafka Topic : {OUTPUT_TOPIC}")
+        self.logger.info("Kafka Producer Started Successfully")
+        self.logger.info("=" * 70)
+
+    # ==========================================================
+    # Send
+    # ==========================================================
+
+    def send(self, record):
+
+        try:
+
+            future = self.producer.send(
+                OUTPUT_TOPIC,
+                value=record
+            )
+
+            future.add_callback(self._delivery_success)
+            future.add_errback(self._delivery_error)
+
+            self.sent_records += 1
+
+            # Flush periodically
+            if self.sent_records % PRINT_STATS_EVERY == 0:
+
+                self.producer.flush(timeout=30)
+
+                self.logger.info(
+                    f"Queued Records : {self.sent_records:,}"
+                )
+
+        except Exception as e:
+
+            self.failed_records += 1
+
+            self.logger.exception(
+                f"Producer Error : {e}"
+            )
+
+    # ==========================================================
+    # Success Callback
+    # ==========================================================
+
+    def _delivery_success(self, metadata):
+
+        self.success_records += 1
+
+    # ==========================================================
+    # Error Callback
+    # ==========================================================
+
+    def _delivery_error(self, exc):
+
+        self.failed_records += 1
+
+        self.logger.error(
+            f"Kafka Delivery Failed : {exc}"
+        )
+
+    # ==========================================================
+    # Flush
+    # ==========================================================
+
+    def flush(self):
+
+        try:
+
+            self.producer.flush(timeout=30)
+
+        except KafkaError as e:
+
+            self.logger.exception(
+                f"Flush Error : {e}"
+            )
+
+    # ==========================================================
+    # Close
+    # ==========================================================
+
+    def close(self):
+
+        try:
+
+            self.flush()
+
+        finally:
+
+            self.producer.close(timeout=30)
+
+        self.logger.info("=" * 70)
+        self.logger.info("PRODUCER SUMMARY")
+        self.logger.info("=" * 70)
+        self.logger.info(f"Queued Records     : {self.sent_records:,}")
+        self.logger.info(f"Delivered Records  : {self.success_records:,}")
+        self.logger.info(f"Failed Records     : {self.failed_records:,}")
+        self.logger.info("=" * 70)
+
+====================================================
+File: C:\IDS\services\preprocessing\logger.py
+====================================================
+"""
+logger.py
+----------
+Enterprise Logger for the IR-IDS Preprocessing Service.
+"""
+
+import logging
+
+from config import (
+    LOG_FOLDER,
+    LOG_FILE,
+    LOG_LEVEL,
+    LOG_FORMAT,
+    DATE_FORMAT
+)
+
+
+class IDSLogger:
+
+    """
+    Enterprise Logger
+
+    Features
+    --------
+    ✓ Console Logging
+    ✓ File Logging
+    ✓ Timestamp
+    ✓ Log Levels
+    ✓ Singleton Logger
+    """
+
+    def __init__(self):
+
+        LOG_FOLDER.mkdir(
+
+            parents=True,
+
+            exist_ok=True
+
+        )
+
+        self.logger = logging.getLogger(
+
+            "IR_IDS_PREPROCESSING"
+
+        )
+
+        if self.logger.hasHandlers():
+
+            return
+
+        # ==========================================================
+        # Logger Level
+        # ==========================================================
+
+        self.logger.setLevel(
+
+            getattr(
+
+                logging,
+
+                LOG_LEVEL
+
+            )
+
+        )
+
+        # ==========================================================
+        # Formatter
+        # ==========================================================
+
+        formatter = logging.Formatter(
+
+            fmt=LOG_FORMAT,
+
+            datefmt=DATE_FORMAT
+
+        )
+
+        # ==========================================================
+        # Console Handler
+        # ==========================================================
+
+        console_handler = logging.StreamHandler()
+
+        console_handler.setFormatter(
+
+            formatter
+
+        )
+
+        # ==========================================================
+        # File Handler
+        # ==========================================================
+
+        file_handler = logging.FileHandler(
+
+            LOG_FILE,
+
+            encoding="utf-8"
+
+        )
+
+        file_handler.setFormatter(
+
+            formatter
+
+        )
+
+        # ==========================================================
+        # Add Handlers
+        # ==========================================================
+
+        self.logger.addHandler(
+
+            console_handler
+
+        )
+
+        self.logger.addHandler(
+
+            file_handler
+
+        )
+
+    # ==============================================================
+    # Return Logger
+    # ==============================================================
+
+    def get_logger(self):
+
+        return self.logger
+
+====================================================
+File: C:\IDS\services\preprocessing\README.md
+====================================================
+# IR-IDS Preprocessing Service
+
+## Overview
+
+The Preprocessing Service is the second microservice in the IR-IDS pipeline.
+
+It consumes raw network traffic records from Kafka, validates them, cleans the data, and publishes standardized records for feature selection.
+
+---
+
+## Pipeline
+
+CSV Ingestion Service
+        │
+        ▼
+raw-traffic
+        │
+        ▼
+Preprocessing Service
+        │
+        ▼
+clean-traffic
+
+---
+
+## Folder Structure
+
+preprocessing/
+
+├── config.py
+├── logger.py
+├── schema.py
+├── validator.py
+├── cleaner.py
+├── kafka_consumer.py
+├── kafka_producer.py
+├── service.py
+├── requirements.txt
+├── README.md
+├── logs/
+└── tests/
+
+---
+
+## Responsibilities
+
+- Consume records from Kafka
+- Validate records
+- Normalize column names
+- Replace null values
+- Replace NaN/Infinity
+- Convert numeric fields
+- Normalize labels
+- Publish cleaned records
+
+---
+
+## Input Topic
+
+raw-traffic
+
+---
+
+## Output Topic
+
+clean-traffic
+
+---
+
+## Run
+
+Install dependencies
+
+pip install -r requirements.txt
+
+Start Kafka
+
+docker compose up -d
+
+Run the service
+
+python service.py
+
+---
+
+## Logs
+
+All logs are written to
+
+logs/preprocessing.log
+
+---
+
+## Next Service
+
+Feature Selection Service
+
+Input Topic:
+
+clean-traffic
+
+Output Topic:
+
+selected-features
+
+====================================================
+File: C:\IDS\services\preprocessing\schema.py
+====================================================
+"""
+schema.py
+----------
+Enterprise Schema Definition for IR-IDS
+
+Defines:
+✓ Column Mapping
+✓ Required Columns
+✓ Numeric Columns
+✓ Label Mapping
+"""
+
+# =============================================================================
+# Column Mapping
+# =============================================================================
+
+COLUMN_MAPPING = {
+
+    "Dst Port": "destination_port",
+    "Src Port": "source_port",
+    "Protocol": "protocol",
+    "Timestamp": "timestamp",
+    "Flow Duration": "flow_duration",
+
+    "Tot Fwd Pkts": "total_forward_packets",
+    "Tot Bwd Pkts": "total_backward_packets",
+
+    "TotLen Fwd Pkts": "total_forward_bytes",
+    "TotLen Bwd Pkts": "total_backward_bytes",
+
+    "Flow Byts/s": "flow_bytes_per_sec",
+    "Flow Pkts/s": "flow_packets_per_sec",
+
+    "Flow IAT Mean": "flow_iat_mean",
+    "Flow IAT Std": "flow_iat_std",
+    "Flow IAT Max": "flow_iat_max",
+    "Flow IAT Min": "flow_iat_min",
+
+    "Fwd IAT Tot": "forward_iat_total",
+    "Bwd IAT Tot": "backward_iat_total",
+
+    "Label": "label"
+
+}
+
+# =============================================================================
+# Required Columns
+# =============================================================================
+
+REQUIRED_COLUMNS = [
+
+    "Label"
+
+]
+
+# =============================================================================
+# Numeric Columns
+# =============================================================================
+
+NUMERIC_COLUMNS = [
+
+    "destination_port",
+    "source_port",
+    "protocol",
+
+    "flow_duration",
+
+    "total_forward_packets",
+    "total_backward_packets",
+
+    "total_forward_bytes",
+    "total_backward_bytes",
+
+    "flow_bytes_per_sec",
+    "flow_packets_per_sec",
+
+    "flow_iat_mean",
+    "flow_iat_std",
+    "flow_iat_max",
+    "flow_iat_min",
+
+    "forward_iat_total",
+    "backward_iat_total"
+
+]
+
+# =============================================================================
+# Label Mapping
+# =============================================================================
+
+LABEL_MAPPING = {
+
+    "BENIGN": "BENIGN",
+    "Benign": "BENIGN",
+    " benign ": "BENIGN",
+
+    "FTP-BruteForce": "FTP_BRUTEFORCE",
+    "SSH-Bruteforce": "SSH_BRUTEFORCE",
+
+    "DoS attacks-Hulk": "DOS_HULK",
+    "DoS attacks-GoldenEye": "DOS_GOLDENEYE",
+    "DoS attacks-Slowloris": "DOS_SLOWLORIS",
+    "DoS attacks-SlowHTTPTest": "DOS_SLOWHTTPTEST",
+
+    "DDoS attacks-LOIC-HTTP": "DDOS_LOIC_HTTP",
+    "DDoS attacks-LOIC-UDP": "DDOS_LOIC_UDP",
+
+    "SQL Injection": "SQL_INJECTION",
+    "Brute Force -Web": "WEB_BRUTEFORCE",
+    "Brute Force -XSS": "WEB_XSS",
+
+    "Infilteration": "INFILTERATION",
+
+    "Bot": "BOT"
+}
+
+====================================================
+File: C:\IDS\services\preprocessing\service.py
+====================================================
+"""
+service.py
+----------
+IR-IDS Preprocessing Service
+Optimized for kafka-python
+"""
+
+import time
+
+from kafka_consumer import PreprocessingConsumer
+from kafka_producer import PreprocessingProducer
+from validator import RecordValidator
+from cleaner import DataCleaner
+from logger import IDSLogger
+from config import PRINT_STATS_EVERY
+
+
+class PreprocessingService:
+
+    def __init__(self):
+
+        self.logger = IDSLogger().get_logger()
+
+        self.consumer = PreprocessingConsumer()
+        self.producer = PreprocessingProducer()
+
+        self.validator = RecordValidator()
+        self.cleaner = DataCleaner()
+
+        self.processed_records = 0
+        self.start_time = time.time()
+
+    # ==========================================================
+    # Process One Record
+    # ==========================================================
+
+    def process_record(self, record):
+
+        valid, _ = self.validator.validate(record)
+
+        if not valid:
+            return
+
+        cleaned = self.cleaner.clean_record(record)
+
+        self.producer.send(cleaned)
+
+        self.processed_records += 1
+
+        # Flush periodically to reduce producer queue buildup
+        if self.processed_records % PRINT_STATS_EVERY == 0:
+
+            self.producer.flush()
+
+            self.print_statistics()
+
+    # ==========================================================
+    # Print Statistics
+    # ==========================================================
+
+    def print_statistics(self):
+
+        validator_stats = self.validator.get_statistics()
+        cleaner_stats = self.cleaner.get_statistics()
+
+        elapsed = max(time.time() - self.start_time, 1)
+
+        speed = self.processed_records / elapsed
+
+        self.logger.info("=" * 70)
+        self.logger.info("PREPROCESSING STATISTICS")
+        self.logger.info("=" * 70)
+        self.logger.info(
+            f"Processed Records : {self.processed_records:,}"
+        )
+        self.logger.info(
+            f"Processing Speed  : {speed:.2f} records/sec"
+        )
+        self.logger.info(
+            f"Valid Records     : {validator_stats['valid_records']:,}"
+        )
+        self.logger.info(
+            f"Invalid Records   : {validator_stats['invalid_records']:,}"
+        )
+        self.logger.info(
+            f"Cleaned Records   : {cleaner_stats['cleaned_records']:,}"
+        )
+        self.logger.info("=" * 70)
+
+    # ==========================================================
+    # Run Service
+    # ==========================================================
+
+    def run(self):
+
+        self.logger.info("=" * 70)
+        self.logger.info("IR-IDS PREPROCESSING SERVICE STARTED")
+        self.logger.info("=" * 70)
+
+        try:
+
+            for record in self.consumer.consume():
+
+                self.process_record(record)
+
+        except KeyboardInterrupt:
+
+            self.logger.info("Keyboard Interrupt Received")
+
+        except Exception as e:
+
+            self.logger.exception(
+                f"Unexpected Error : {e}"
+            )
+
+        finally:
+
+            self.shutdown()
+
+    # ==========================================================
+    # Shutdown
+    # ==========================================================
+
+    def shutdown(self):
+
+        self.logger.info("=" * 70)
+        self.logger.info("Stopping Service...")
+        self.logger.info("=" * 70)
+
+        # Flush pending producer messages
+        try:
+
+            self.producer.flush()
+
+        except Exception as e:
+
+            self.logger.exception(
+                f"Producer Flush Error : {e}"
+            )
+
+        # Close Consumer
+        try:
+
+            self.consumer.close()
+
+        except Exception as e:
+
+            self.logger.exception(
+                f"Consumer Close Error : {e}"
+            )
+
+        # Close Producer
+        try:
+
+            self.producer.close()
+
+        except Exception as e:
+
+            self.logger.exception(
+                f"Producer Close Error : {e}"
+            )
+
+        elapsed = max(time.time() - self.start_time, 1)
+
+        self.logger.info("=" * 70)
+        self.logger.info("FINAL REPORT")
+        self.logger.info("=" * 70)
+        self.logger.info(
+            f"Processed Records : {self.processed_records:,}"
+        )
+        self.logger.info(
+            f"Total Time        : {elapsed:.2f} sec"
+        )
+        self.logger.info(
+            f"Average Speed     : {self.processed_records / elapsed:.2f} records/sec"
+        )
+        self.logger.info("=" * 70)
+
+        self.logger.info("Service Shutdown Completed")
+
+
+if __name__ == "__main__":
+
+    service = PreprocessingService()
+
+    service.run()
+
+====================================================
+File: C:\IDS\services\preprocessing\test_kafka.py
+====================================================
+
+====================================================
+File: C:\IDS\services\preprocessing\validator.py
+====================================================
+"""
+validator.py
+------------
+High Performance Record Validator
+"""
+
+from typing import Dict, Any
+
+from schema import REQUIRED_COLUMNS
+
+
+class RecordValidator:
+
+    def __init__(self):
+
+        self.valid_records = 0
+        self.invalid_records = 0
+
+    # ==========================================================
+
+    def validate(self, record: Dict[str, Any]):
+
+        if not record or not isinstance(record, dict):
+
+            self.invalid_records += 1
+
+            return False, "Empty Record"
+
+        for column in REQUIRED_COLUMNS:
+
+            value = record.get(column)
+
+            if value is None:
+
+                self.invalid_records += 1
+
+                return False, f"Missing or None: {column}"
+
+            if isinstance(value, str) and not value.strip():
+
+                self.invalid_records += 1
+
+                return False, f"Empty: {column}"
+
+        self.valid_records += 1
+
+        return True, "Valid"
+
+    # ==========================================================
+
+    def get_statistics(self):
+
+        return {
+            "valid_records": self.valid_records,
+            "invalid_records": self.invalid_records,
+        }
+
+    # ==========================================================
+
+    def reset_statistics(self):
+
+        self.valid_records = 0
+        self.invalid_records = 0
