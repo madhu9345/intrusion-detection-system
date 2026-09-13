@@ -1,12 +1,49 @@
+import json
+import time
+
 from scapy.all import sniff, IP, TCP, UDP
+from kafka import KafkaProducer
 
 from flow_tracker import Flow
 
 
-INTERFACE = "eth0"
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+INTERFACE = r"\Device\NPF_{796F9A93-0B01-42BB-85EF-C8AFC8520425}"
+
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+KAFKA_TOPIC = "selected-features"
+
+
+# ============================================================
+# KAFKA PRODUCER
+# ============================================================
+
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+    value_serializer=lambda value: json.dumps(value).encode("utf-8"),
+
+    # Stable configuration for local Kafka testing
+    acks=1,
+    retries=3,
+    max_in_flight_requests_per_connection=1,
+    batch_size=0,
+    linger_ms=0
+)
+
+
+# ============================================================
+# FLOW STORAGE
+# ============================================================
 
 flows = {}
 
+
+# ============================================================
+# GET PACKET INFORMATION
+# ============================================================
 
 def get_packet_info(packet):
 
@@ -16,6 +53,10 @@ def get_packet_info(packet):
     ip = packet[IP]
 
     protocol = ip.proto
+
+    # --------------------------------------------------------
+    # TCP
+    # --------------------------------------------------------
 
     if packet.haslayer(TCP):
 
@@ -29,6 +70,10 @@ def get_packet_info(packet):
         window = tcp.window
 
         rst = bool(tcp.flags & 0x04)
+
+    # --------------------------------------------------------
+    # UDP
+    # --------------------------------------------------------
 
     elif packet.haslayer(UDP):
 
@@ -61,6 +106,10 @@ def get_packet_info(packet):
     )
 
 
+# ============================================================
+# PROCESS PACKET
+# ============================================================
+
 def process_packet(packet):
 
     info = get_packet_info(packet)
@@ -81,9 +130,10 @@ def process_packet(packet):
         timestamp
     ) = info
 
-    # -----------------------------
-    # Bidirectional flow key
-    # -----------------------------
+
+    # ========================================================
+    # BIDIRECTIONAL FLOW KEY
+    # ========================================================
 
     forward_key = (
         src_ip,
@@ -101,9 +151,10 @@ def process_packet(packet):
         protocol
     )
 
-    # -----------------------------
-    # Find existing flow
-    # -----------------------------
+
+    # ========================================================
+    # FIND EXISTING FLOW
+    # ========================================================
 
     if forward_key in flows:
 
@@ -131,9 +182,10 @@ def process_packet(packet):
 
         direction = "forward"
 
-    # -----------------------------
-    # Add packet
-    # -----------------------------
+
+    # ========================================================
+    # ADD PACKET TO FLOW
+    # ========================================================
 
     flow.add_packet(
         timestamp=timestamp,
@@ -144,15 +196,17 @@ def process_packet(packet):
         rst=rst
     )
 
-    # -----------------------------
-    # Calculate current features
-    # -----------------------------
+
+    # ========================================================
+    # CALCULATE 16 SELECTED FEATURES
+    # ========================================================
 
     features = flow.calculate_features()
 
-    # -----------------------------
-    # Display
-    # -----------------------------
+
+    # ========================================================
+    # DISPLAY LIVE FLOW
+    # ========================================================
 
     print("\n======================================")
     print("LIVE FLOW")
@@ -173,17 +227,67 @@ def process_packet(packet):
         )
 
 
+    # ========================================================
+    # SEND 16 FEATURES TO KAFKA
+    # ========================================================
+
+    try:
+
+        future = producer.send(
+            KAFKA_TOPIC,
+            value=features
+        )
+
+        # Wait for Kafka acknowledgement
+        future.get(timeout=10)
+
+        print("--------------------------------------")
+        print("KAFKA STATUS : SENT")
+        print("TOPIC        :", KAFKA_TOPIC)
+
+    except Exception as e:
+
+        print("--------------------------------------")
+        print("KAFKA ERROR  :", e)
+
+
+# ============================================================
+# START
+# ============================================================
+
 print("======================================")
 print(" REAL-TIME FLOW FEATURE EXTRACTION")
 print("======================================")
 
 print("Interface:", INTERFACE)
+print("Kafka:", KAFKA_BOOTSTRAP_SERVERS)
+print("Topic:", KAFKA_TOPIC)
 print("Press CTRL+C to stop")
 print()
 
 
-sniff(
-    iface=INTERFACE,
-    prn=process_packet,
-    store=False
-)
+# ============================================================
+# START PACKET CAPTURE
+# ============================================================
+
+try:
+
+    sniff(
+        iface=INTERFACE,
+        prn=process_packet,
+        store=False
+    )
+
+except KeyboardInterrupt:
+
+    print("\nStopping packet capture...")
+
+finally:
+
+    try:
+        producer.flush()
+        producer.close()
+    except Exception:
+        pass
+
+    print("Kafka producer closed.")
