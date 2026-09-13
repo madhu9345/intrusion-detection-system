@@ -1,0 +1,18 @@
+SELECTED_FEATURES = [
+    "Bwd Pkt Len Max",
+    "Bwd Header Len",
+    "Active Min",
+    "Init Bwd Win Byts",
+    "Init Fwd Win Byts",
+    "Bwd IAT Min",
+    "Fwd Pkt Len Max",
+    "Idle Mean",
+    "RST Flag Cnt",
+    "Fwd IAT Std",
+    "flow_duration",
+    "total_forward_packets",
+    "Pkt Size Avg",
+    "Down/Up Ratio",
+    "Fwd IAT Min",
+    "flow_packets_per_sec",
+]
