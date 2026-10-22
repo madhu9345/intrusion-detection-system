@@ -5,15 +5,15 @@ Enterprise Configuration for the IR-IDS Preprocessing Service
 Compatible with kafka-python 2.2.15
 """
 
+import os
 from pathlib import Path
 
 # =============================================================================
 # Project Paths
 # =============================================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-SERVICE_ROOT = Path(__file__).parent
+SERVICE_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2] if len(Path(__file__).resolve().parents) > 2 else SERVICE_ROOT
 
 LOG_FOLDER = SERVICE_ROOT / "logs"
 
@@ -23,11 +23,14 @@ LOG_FILE = LOG_FOLDER / "preprocessing.log"
 # Kafka Consumer
 # =============================================================================
 
-BOOTSTRAP_SERVER = "localhost:9092"
+BOOTSTRAP_SERVER = os.getenv(
+    "BOOTSTRAP_SERVER",
+    os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+)
 
-INPUT_TOPIC = "raw-traffic"
+INPUT_TOPIC = os.getenv("INPUT_TOPIC", "raw-traffic")
 
-CONSUMER_GROUP = "preprocessing-service-v2"
+CONSUMER_GROUP = os.getenv("CONSUMER_GROUP", "preprocessing-service-v2")
 
 AUTO_OFFSET_RESET = "earliest"
 
@@ -46,7 +49,7 @@ HEARTBEAT_INTERVAL_MS = 3000
 # Kafka Producer
 # =============================================================================
 
-OUTPUT_TOPIC = "clean-traffic"
+OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", "clean-traffic")
 
 CLIENT_ID = "preprocessing-producer"
 

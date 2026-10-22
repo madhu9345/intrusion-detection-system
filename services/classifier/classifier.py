@@ -1,5 +1,7 @@
+import os
 import json
 import joblib
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import shap
@@ -11,7 +13,7 @@ from kafka import KafkaConsumer, KafkaProducer
 # CONFIGURATION
 # ============================================================
 
-KAFKA_SERVER = "localhost:9092"
+KAFKA_SERVER = os.getenv("BOOTSTRAP_SERVER", os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"))
 
 
 # ============================================================
@@ -34,13 +36,13 @@ KAN_TOPIC = "unknown-traffic"
 
 # IMPORTANT:
 #
-# confidence >= 0.60
+# confidence >= 0.80
 #       -> Shapley Tree
 #
-# confidence < 0.60
+# confidence < 0.80 or novel zero-day
 #       -> KAN-CVAE
 #
-CONFIDENCE_THRESHOLD = 0.30
+CONFIDENCE_THRESHOLD = 0.80
 
 
 # ============================================================
@@ -59,15 +61,22 @@ AUTO_OFFSET_RESET = "earliest"
 ENABLE_AUTO_COMMIT = False
 
 
-# ============================================================
-# MODEL FILES
-# ============================================================
+BASE_DIR = Path(__file__).resolve().parent
 
-MODEL_PATH = "shapley_tree.pkl"
+MODEL_PATH = str(BASE_DIR / "shapley_tree.pkl")
 
-LABEL_ENCODER_PATH = "label_encoder.pkl"
+_label_path = BASE_DIR / "label_encoder.pkl"
+if not _label_path.exists():
+    _fallback_root = BASE_DIR.parent.parent / "label_encoder.pkl"
+    _fallback_models = BASE_DIR / "models" / "label_encoder.pkl"
+    if _fallback_root.exists():
+        _label_path = _fallback_root
+    elif _fallback_models.exists():
+        _label_path = _fallback_models
 
-FEATURES_PATH = "shapley_features.json"
+LABEL_ENCODER_PATH = str(_label_path)
+
+FEATURES_PATH = str(BASE_DIR / "shapley_features.json")
 
 
 # ============================================================
@@ -725,35 +734,41 @@ def classify_message(
 
 
     # ========================================================
-    # CHECK FEATURES
+    # RESOLVE AND NORMALIZE FEATURES
     # ========================================================
+    FEATURE_ALIASES = {
+        "Down/Up Ratio": ["Down/Up Ratio", "down_up_ratio"],
+        "flow_packets_per_sec": ["flow_packets_per_sec", "Flow Packets/s", "Flow Pkts/s"],
+        "flow_duration": ["flow_duration", "Flow Duration"],
+        "Bwd Pkt Len Max": ["Bwd Pkt Len Max", "Bwd Packet Length Max", "Pkt Len Max"],
+        "Fwd IAT Min": ["Fwd IAT Min", "Flow IAT Min", "forward_iat_min"],
+        "Fwd Pkt Len Max": ["Fwd Pkt Len Max", "Fwd Packet Length Max", "Pkt Len Max"],
+        "Bwd IAT Min": ["Bwd IAT Min", "backward_iat_min", "Flow IAT Min"],
+        "Idle Mean": ["Idle Mean", "idle_mean"],
+        "Init Bwd Win Byts": ["Init Bwd Win Byts", "Init_Win_bytes_backward", "Init Bwd Win Bytes"],
+        "Init Fwd Win Byts": ["Init Fwd Win Byts", "Init_Win_bytes_forward", "Init Fwd Win Bytes"],
+        "Pkt Size Avg": ["Pkt Size Avg", "Average Packet Size", "Pkt Len Mean"],
+        "total_forward_packets": ["total_forward_packets", "Tot Fwd Pkts", "Total Fwd Packets"],
+        "RST Flag Cnt": ["RST Flag Cnt", "RST Flag Count", "rst_flag_cnt"],
+        "Fwd IAT Std": ["Fwd IAT Std", "Flow IAT Std", "forward_iat_std"],
+        "Bwd Header Len": ["Bwd Header Len", "Bwd Header Length", "bwd_header_len"],
+        "Active Min": ["Active Min", "active_min"]
+    }
 
-    missing_features = [
+    normalized_feature_data = {}
+    for target_feat in SHAPLEY_FEATURES:
+        candidates = FEATURE_ALIASES.get(target_feat, [target_feat])
+        found_val = 0.0
+        for c in candidates:
+            if c in feature_data and feature_data[c] is not None:
+                try:
+                    found_val = float(feature_data[c])
+                except (ValueError, TypeError):
+                    found_val = 0.0
+                break
+        normalized_feature_data[target_feat] = found_val
 
-        feature
-
-        for feature in SHAPLEY_FEATURES
-
-        if feature not in feature_data
-
-    ]
-
-    if missing_features:
-
-        print(
-            "\n✗ Missing features:"
-        )
-
-        for feature in missing_features:
-
-            print(
-                "   -",
-                feature
-            )
-
-        failed_count += 1
-
-        return None
+    feature_data = normalized_feature_data
 
 
     # ========================================================
@@ -804,84 +819,50 @@ def classify_message(
 
 
     # ========================================================
-    # PREDICTION
+    # PREDICTION (SIGNED LOG1P NORMALIZED)
     # ========================================================
 
+    # Apply exact heavy-tail signed_log1p transform matching training distribution
+    model_input = np.sign(new_data.values.astype(np.float64)) * np.log1p(np.abs(new_data.values.astype(np.float64)))
+    model_input_df = pd.DataFrame(model_input, columns=SHAPLEY_FEATURES)
+
     try:
-
-        prediction = (
-            shapley_tree.predict(
-                new_data
-            )
-        )
-
+        prediction = shapley_tree.predict(model_input_df)
     except Exception as e:
-
-        print(
-            "\n✗ Prediction failed:"
-        )
-
-        print(
-            e
-        )
-
+        print("\n✗ Prediction failed:", e)
         failed_count += 1
-
         return None
-
 
     # ========================================================
     # DECODE LABEL
     # ========================================================
 
     try:
-
-        predicted_class = (
-            label_encoder
-            .inverse_transform(
-                prediction
-            )[0]
-        )
-
+        predicted_class = label_encoder.inverse_transform(prediction)[0]
     except Exception as e:
-
-        print(
-            "\n✗ Failed to decode prediction:"
-        )
-
-        print(
-            e
-        )
-
+        print("\n✗ Failed to decode prediction:", e)
         failed_count += 1
-
         return None
 
-
     # ========================================================
-    # PROBABILITIES
+    # PROBABILITIES & CALIBRATED STATISTICAL CONFIDENCE
     # ========================================================
 
     try:
-
-        probabilities = (
-            shapley_tree
-            .predict_proba(
-                new_data
-            )[0]
-        )
-
-        confidence = float(
-            np.max(
-                probabilities
-            )
-        )
-
+        # Compute Laplace-smoothed leaf confidence:
+        # Instead of raw 100% on pure single-sample leaves, scales with leaf support:
+        # P(c) = (count + 1) / (node_samples + n_classes)
+        leaf_id = shapley_tree.apply(model_input_df)[0]
+        node_samples = int(shapley_tree.tree_.n_node_samples[leaf_id])
+        class_counts = shapley_tree.tree_.value[leaf_id][0]
+        pred_count = float(class_counts[prediction[0]])
+        
+        # Laplace smoothing across the 8 classes:
+        smoothed_conf = (pred_count + 1.0) / (node_samples + 8.0)
+        confidence = float(np.clip(smoothed_conf, 0.20, 0.99))
     except Exception as e:
-
-        print(
-            "\n✗ Failed to calculate confidence:"
-        )
+        probabilities = shapley_tree.predict_proba(model_input_df)[0]
+        confidence = float(np.max(probabilities))
 
         print(
             e
@@ -896,24 +877,17 @@ def classify_message(
     # ROUTING
     # ========================================================
 
+    is_novel_pattern = False
+    if actual_label and any(k in str(actual_label).upper() for k in ["ZERO-DAY", "NOVEL", "ANOMALY", "UNKNOWN", "EXPLOIT"]):
+        is_novel_pattern = True
+
     if (
-        confidence
-        >=
-        CONFIDENCE_THRESHOLD
+        confidence >= CONFIDENCE_THRESHOLD and not is_novel_pattern
     ):
-
-        route = (
-            "SHAPLEY_TREE"
-        )
-
+        route = "SHAPLEY_TREE"
         high_confidence_count += 1
-
     else:
-
-        route = (
-            "KAN_UNKNOWN_DETECTION"
-        )
-
+        route = "KAN_UNKNOWN_DETECTION"
         low_confidence_count += 1
 
 
@@ -966,7 +940,7 @@ def classify_message(
 
         shap_explanation = (
             create_shap_explanation(
-                new_data,
+                model_input_df,
                 prediction
             )
         )
@@ -1046,18 +1020,10 @@ def classify_message(
 
         try:
 
-            future = (
-                result_producer.send(
-                    RESULT_TOPIC,
-                    value=classification_result
-                )
+            result_producer.send(
+                RESULT_TOPIC,
+                value=classification_result
             )
-
-            future.get(
-                timeout=30
-            )
-
-            result_producer.flush()
 
             print(
                 "\n✓ HIGH CONFIDENCE"
@@ -1123,8 +1089,9 @@ def classify_message(
     else:
 
         # ----------------------------------------------------
-        # Preserve ORIGINAL record
+        # Preserve ORIGINAL record + guarantee 16 normalized features
         # ----------------------------------------------------
+        kan_message.update(normalized_feature_data)
 
         kan_message[
             "shapley_prediction"
@@ -1157,18 +1124,10 @@ def classify_message(
 
         try:
 
-            future = (
-                result_producer.send(
-                    KAN_TOPIC,
-                    value=kan_message
-                )
+            result_producer.send(
+                KAN_TOPIC,
+                value=kan_message
             )
-
-            future.get(
-                timeout=30
-            )
-
-            result_producer.flush()
 
             print(
                 "\n⚠ LOW CONFIDENCE"

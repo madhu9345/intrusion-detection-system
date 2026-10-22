@@ -884,6 +884,11 @@ class FeatureSelectionPipeline:
 
 if __name__ == "__main__":
 
-    pipeline = FeatureSelectionPipeline()
+    from config import USE_HITON_PC
 
-    pipeline.run()
+    if USE_HITON_PC:
+        from hiton_service import main as hiton_main
+        hiton_main()
+    else:
+        pipeline = FeatureSelectionPipeline()
+        pipeline.run()

@@ -1,74 +1,198 @@
-version: "3.9"
-
 services:
 
+  # -------------------------------------------------------------
+  # KAFKA MESSAGE BROKER
+  # -------------------------------------------------------------
   kafka:
     image: apache/kafka:3.9.1
     container_name: kafka
     hostname: kafka
-
     ports:
       - "9092:9092"
-
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-
       KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
-
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-
-      # Single-node Kafka settings
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
-      # Automatically create topics (development only)
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-
     volumes:
       - kafka-data:/var/lib/kafka/data
-
     restart: unless-stopped
 
+  # -------------------------------------------------------------
+  # KAFKA WEB UI DASHBOARD (http://localhost:8080)
+  # -------------------------------------------------------------
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
-
     ports:
       - "8080:8080"
-
     depends_on:
       - kafka
-
     environment:
       KAFKA_CLUSTERS_0_NAME: Local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-
     restart: unless-stopped
 
+  # -------------------------------------------------------------
+  # STAGE 1: SURICATA LOG INGESTION (eve.json -> raw-traffic)
+  # -------------------------------------------------------------
+  suricata-ingest:
+    build:
+      context: ../services/ingestion
+    container_name: suricata-ingest
+    depends_on:
+      - kafka
+    volumes:
+      - ../services/ingestion:/app
+      - ../datasets/suricata:/app/datasets/suricata
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      SURICATA_EVE_PATH: /app/datasets/suricata/eve.json
+      RAW_TRAFFIC_TOPIC: raw-traffic
+      SURICATA_FROM_START: "true"
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # STAGE 2: PREPROCESSING SERVICE (raw-traffic -> clean-traffic)
+  # -------------------------------------------------------------
+  preprocessing:
+    build:
+      context: ../services/preprocessing
+    container_name: preprocessing
+    depends_on:
+      - kafka
+      - suricata-ingest
+    volumes:
+      - ../services/preprocessing:/app
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      INPUT_TOPIC: raw-traffic
+      OUTPUT_TOPIC: clean-traffic
+      CONSUMER_GROUP: preprocessing-docker-group
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # STAGE 3: CAUSAL FEATURE SELECTION (clean-traffic -> selected-features)
+  # -------------------------------------------------------------
   feature-selection:
     build:
       context: ../services/feature_selection
-
     container_name: feature-selection
-
     depends_on:
       - kafka
-
-    restart: unless-stopped
-
+      - preprocessing
+    volumes:
+      - ../services/feature_selection:/app
     environment:
       BOOTSTRAP_SERVER: kafka:29092
       INPUT_TOPIC: clean-traffic
       OUTPUT_TOPIC: selected-features
-      GROUP_ID: feature-selection-group
+      GROUP_ID: feature-selection-docker-group
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # STAGE 4: CLASSIFIER / SHAPLEY TREE (selected-features -> classification-results / unknown-traffic)
+  # -------------------------------------------------------------
+  classifier:
+    build:
+      context: ../services/classifier
+    container_name: classifier
+    depends_on:
+      - kafka
+      - feature-selection
+    volumes:
+      - ../services/classifier:/app
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # STAGE 5: KAN-CVAE ANOMALY DETECTOR (unknown-traffic -> alerts)
+  # -------------------------------------------------------------
+  kan-cvae:
+    build:
+      context: ../services/kan_cvae
+    container_name: kan-cvae
+    depends_on:
+      - kafka
+      - classifier
+    volumes:
+      - ../services/kan_cvae:/app
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      KAN_DEVICE: cpu
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # STAGE 6: DEFENSE OPERATIONS DASHBOARD UI (http://localhost:8050)
+  # -------------------------------------------------------------
+  dashboard:
+    build:
+      context: ../services/dashboard
+    container_name: dashboard
+    ports:
+      - "8050:8050"
+    depends_on:
+      - kafka
+      - classifier
+      - kan-cvae
+    volumes:
+      - ../services:/services
+      - ../services/dashboard:/app
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+    profiles:
+      - dashboard-container
+
+  # -------------------------------------------------------------
+  # OPTION A: REAL SURICATA SENSOR CONTAINER
+  # -------------------------------------------------------------
+  suricata:
+    image: jasonish/suricata:latest
+    container_name: suricata
+    restart: unless-stopped
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_NICE
+    volumes:
+      - ../datasets/suricata:/var/log/suricata
+    command: -i eth0
+    profiles:
+      - sensor
+
+  # -------------------------------------------------------------
+  # OPTION B: SURICATA TRAFFIC SIMULATOR (500 flows/sec generator)
+  # -------------------------------------------------------------
+  suricata-simulator:
+    build:
+      context: ../services/ingestion
+    container_name: suricata-simulator
+    command: python suricata_simulator.py --rate 500
+    volumes:
+      - ../services/ingestion:/app
+      - ../datasets/suricata:/app/datasets/suricata
+    environment:
+      SURICATA_EVE_PATH: /app/datasets/suricata/eve.json
+      PYTHONUNBUFFERED: "1"
+    profiles:
+      - simulator
 
 volumes:
   kafka-data:

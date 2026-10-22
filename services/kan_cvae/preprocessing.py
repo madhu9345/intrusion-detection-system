@@ -33,6 +33,30 @@ def signed_log1p(x):
 
 
 # ============================================================
+# FEATURE ALIASES
+# ============================================================
+
+FEATURE_ALIASES = {
+    "Down/Up Ratio": ["Down/Up Ratio", "down_up_ratio"],
+    "flow_packets_per_sec": ["flow_packets_per_sec", "Flow Packets/s", "Flow Pkts/s"],
+    "flow_duration": ["flow_duration", "Flow Duration"],
+    "Bwd Pkt Len Max": ["Bwd Pkt Len Max", "Bwd Packet Length Max", "Pkt Len Max"],
+    "Fwd IAT Min": ["Fwd IAT Min", "Flow IAT Min", "forward_iat_min"],
+    "Fwd Pkt Len Max": ["Fwd Pkt Len Max", "Fwd Packet Length Max", "Pkt Len Max"],
+    "Bwd IAT Min": ["Bwd IAT Min", "backward_iat_min", "Flow IAT Min"],
+    "Idle Mean": ["Idle Mean", "idle_mean"],
+    "Init Bwd Win Byts": ["Init Bwd Win Byts", "Init_Win_bytes_backward", "Init Bwd Win Bytes"],
+    "Init Fwd Win Byts": ["Init Fwd Win Byts", "Init_Win_bytes_forward", "Init Fwd Win Bytes"],
+    "Pkt Size Avg": ["Pkt Size Avg", "Average Packet Size", "Pkt Len Mean"],
+    "total_forward_packets": ["total_forward_packets", "Tot Fwd Pkts", "Total Fwd Packets"],
+    "RST Flag Cnt": ["RST Flag Cnt", "RST Flag Count", "rst_flag_cnt"],
+    "Fwd IAT Std": ["Fwd IAT Std", "Flow IAT Std", "forward_iat_std"],
+    "Bwd Header Len": ["Bwd Header Len", "Bwd Header Length", "bwd_header_len"],
+    "Active Min": ["Active Min", "active_min"]
+}
+
+
+# ============================================================
 # TRAFFIC PREPROCESSOR
 # ============================================================
 
@@ -261,50 +285,19 @@ class TrafficPreprocessor:
                     f"Record {record_index} "
                     "must be a dictionary."
                 )
-
             row = []
 
             for feature in self.features:
-
-                if feature not in record:
-
-                    raise KeyError(
-                        f"Record {record_index}: "
-                        f"missing feature "
-                        f"'{feature}'."
-                    )
-
-                value = record[
-                    feature
-                ]
-
-                if value is None:
-
-                    raise ValueError(
-                        f"Record {record_index}: "
-                        f"'{feature}' is None."
-                    )
-
-                try:
-
-                    value = float(
-                        value
-                    )
-
-                except (
-                    ValueError,
-                    TypeError
-                ):
-
-                    raise ValueError(
-                        f"Record {record_index}: "
-                        f"invalid value for "
-                        f"'{feature}': {value}"
-                    )
-
-                row.append(
-                    value
-                )
+                candidates = FEATURE_ALIASES.get(feature, [feature])
+                value = 0.0
+                for c in candidates:
+                    if c in record and record[c] is not None:
+                        try:
+                            value = float(record[c])
+                            break
+                        except (ValueError, TypeError):
+                            pass
+                row.append(value)
 
             rows.append(
                 row

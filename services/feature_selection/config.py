@@ -6,9 +6,8 @@ from pathlib import Path
 # Paths
 # ==========================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
 SERVICE_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2] if len(Path(__file__).resolve().parents) > 2 else SERVICE_ROOT
 
 LOG_FOLDER = SERVICE_ROOT / "logs"
 
@@ -32,8 +31,8 @@ MODEL_FOLDER.mkdir(
 # ==========================================================
 
 BOOTSTRAP_SERVER = os.getenv(
-    "KAFKA_BOOTSTRAP_SERVERS",
-    "localhost:9092"
+    "BOOTSTRAP_SERVER",
+    os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 )
 
 INPUT_TOPIC = os.getenv(
@@ -174,6 +173,12 @@ RANDOM_STATE = 42
 # ==========================================================
 # Models
 # ==========================================================
+
+HITON_PC_MODEL = (
+    MODEL_FOLDER / "hiton_pc_model.pkl"
+)
+
+USE_HITON_PC = os.getenv("USE_HITON_PC", "true").lower() in ("true", "1", "yes")
 
 CLASSIFIER_MODEL = (
     MODEL_FOLDER / "classifier.pkl"

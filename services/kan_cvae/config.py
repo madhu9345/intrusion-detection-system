@@ -1,13 +1,15 @@
 import os
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
 
 # ============================================================
 # KAFKA CONFIGURATION
 # ============================================================
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv(
-    "KAFKA_BOOTSTRAP_SERVERS",
-    "localhost:9092"
+    "BOOTSTRAP_SERVER",
+    os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 )
 
 # Input from Shapley Tree low-confidence routing
@@ -71,27 +73,27 @@ BATCH_WAIT_MS = int(
 
 MODEL_PATH = os.getenv(
     "MODEL_PATH",
-    "models/kan_cvae.pt"
+    str(BASE_DIR / "models" / "kan_cvae.pt")
 )
 
 SCALER_PATH = os.getenv(
     "SCALER_PATH",
-    "models/scaler.pkl"
+    str(BASE_DIR / "models" / "scaler.pkl")
 )
 
 PREPROCESSING_CONFIG_PATH = os.getenv(
     "PREPROCESSING_CONFIG_PATH",
-    "models/preprocessing_config.json"
+    str(BASE_DIR / "models" / "preprocessing_config.json")
 )
 
 FEATURES_PATH = os.getenv(
     "FEATURES_PATH",
-    "models/kan_features.json"
+    str(BASE_DIR / "models" / "kan_features.json")
 )
 
 THRESHOLD_PATH = os.getenv(
     "THRESHOLD_PATH",
-    "models/threshold.json"
+    str(BASE_DIR / "models" / "threshold.json")
 )
 
 
