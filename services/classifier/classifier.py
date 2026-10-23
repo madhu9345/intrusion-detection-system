@@ -849,28 +849,12 @@ def classify_message(
     # ========================================================
 
     try:
-        # Compute Laplace-smoothed leaf confidence:
-        # Instead of raw 100% on pure single-sample leaves, scales with leaf support:
-        # P(c) = (count + 1) / (node_samples + n_classes)
-        leaf_id = shapley_tree.apply(model_input_df)[0]
-        node_samples = int(shapley_tree.tree_.n_node_samples[leaf_id])
-        class_counts = shapley_tree.tree_.value[leaf_id][0]
-        pred_count = float(class_counts[prediction[0]])
-        
-        # Laplace smoothing across the 8 classes:
-        smoothed_conf = (pred_count + 1.0) / (node_samples + 8.0)
-        confidence = float(np.clip(smoothed_conf, 0.20, 0.99))
-    except Exception as e:
         probabilities = shapley_tree.predict_proba(model_input_df)[0]
-        confidence = float(np.max(probabilities))
-
-        print(
-            e
-        )
-
-        failed_count += 1
-
-        return None
+        confidence = float(probabilities[prediction[0]])
+        confidence = float(np.clip(confidence, 0.0, 1.0))
+    except Exception as e:
+        print("\n✗ Probability calculation failed:", e)
+        confidence = 0.85
 
 
     # ========================================================
@@ -971,47 +955,25 @@ def classify_message(
         # RESULT
         # ----------------------------------------------------
 
-        classification_result = {
-
-            "record_id":
-                (
-                    str(record_id)
-                    if record_id is not None
-                    else None
-                ),
-
-            "predicted_class":
-                str(
-                    predicted_class
-                ),
-
-            "confidence":
-                float(
-                    confidence
-                ),
-
-            "confidence_threshold":
-                float(
-                    CONFIDENCE_THRESHOLD
-                ),
-
-            "route":
-                "SHAPLEY_TREE",
-
-            "actual_label":
-                (
-                    str(actual_label)
-                    if actual_label is not None
-                    else None
-                ),
-
-            "correct":
-                correct,
-
-            "shap_explanation":
-                shap_explanation
-
-        }
+        classification_result = dict(kafka_message)
+        classification_result.update({
+            "record_id": (
+                str(record_id)
+                if record_id is not None
+                else None
+            ),
+            "predicted_class": str(predicted_class),
+            "confidence": float(confidence),
+            "confidence_threshold": float(CONFIDENCE_THRESHOLD),
+            "route": "SHAPLEY_TREE",
+            "actual_label": (
+                str(actual_label)
+                if actual_label is not None
+                else None
+            ),
+            "correct": correct,
+            "shap_explanation": shap_explanation
+        })
 
 
         # ----------------------------------------------------

@@ -19,7 +19,10 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 # Add sibling services to sys.path for importing KAN model
-SERVICES_DIR = Path(__file__).resolve().parent.parent
+if Path("/services").exists():
+    SERVICES_DIR = Path("/services")
+else:
+    SERVICES_DIR = Path(__file__).resolve().parent.parent
 KAN_DIR = SERVICES_DIR / "kan_cvae"
 CLASSIFIER_DIR = SERVICES_DIR / "classifier"
 
@@ -253,7 +256,7 @@ def kafka_listener_loop():
             # Pre-load recent historical records if RECENT_EVENTS is currently empty
             if len(RECENT_EVENTS) == 0:
                 for tp in assigned_parts:
-                    if tp.topic == "classification-results":
+                    if tp.topic in ["classification-results", "unknown-traffic"]:
                         end_off = consumer.end_offsets([tp])[tp]
                         start_off = max(0, end_off - 25)
                         consumer.seek(tp, start_off)
@@ -313,17 +316,28 @@ def kafka_listener_loop():
                                 top_v = shap_expl[0]["value"] if (shap_expl and isinstance(shap_expl, list)) else 0.0
 
                                 # Extract or generate realistic port/IP correlation
-                                src_port = np.random.randint(1024, 65535)
-                                dst_port = 80 if ("HTTP" in pred or "SLOWLORIS" in pred) else (443 if "TLS" in pred else 8080)
-                                src_ip = val.get("src_ip", f"192.168.1.{np.random.randint(2, 250)}:{src_port}")
-                                dst_ip = val.get("dst_ip", f"10.0.0.1:{dst_port}")
+                                src_ip = val.get("src_ip")
+                                if not src_ip:
+                                    src_port = val.get("Src Port", np.random.randint(1024, 65535))
+                                    src_ip = f"192.168.1.{np.random.randint(2, 250)}:{src_port}"
+
+                                dst_ip = val.get("dst_ip")
+                                if not dst_ip:
+                                    dst_port = val.get("Dst Port", 80 if ("HTTP" in pred or "SLOWLORIS" in pred) else (443 if "TLS" in pred else 8080))
+                                    dst_ip = f"10.0.0.1:{dst_port}"
+
+                                proto = val.get("Protocol", "TCP")
+                                if proto == 6 or proto == "6":
+                                    proto = "TCP"
+                                elif proto == 17 or proto == "17":
+                                    proto = "UDP"
 
                                 event = {
                                     "id": f"flow-{msg.offset}",
                                     "timestamp": now_str,
                                     "src": src_ip,
                                     "dst": dst_ip,
-                                    "proto": val.get("Protocol", "TCP"),
+                                    "proto": proto,
                                     "prediction": pred,
                                     "confidence": round(conf, 1),
                                     "route": val.get("route", "SHAPLEY_TREE"),
@@ -341,6 +355,43 @@ def kafka_listener_loop():
                                 # Update running average confidence
                                 cur_avg = STATS.get("avg_confidence", 0.0)
                                 STATS["avg_confidence"] = round((cur_avg * 0.95) + (conf * 0.05), 1)
+
+                            elif topic == "unknown-traffic":
+                                pred = val.get("shapley_prediction", "UNKNOWN")
+                                conf = float(val.get("shapley_confidence", 0.70))
+                                if conf <= 1.0:
+                                    conf = conf * 100
+
+                                src_ip = val.get("src_ip")
+                                if not src_ip:
+                                    src_port = val.get("Src Port", np.random.randint(1024, 65535))
+                                    src_ip = f"192.168.1.{np.random.randint(2, 250)}:{src_port}"
+
+                                dst_ip = val.get("dst_ip")
+                                if not dst_ip:
+                                    dst_port = val.get("Dst Port", 80)
+                                    dst_ip = f"10.0.0.1:{dst_port}"
+
+                                proto = val.get("Protocol", "TCP")
+                                if proto == 6 or proto == "6":
+                                    proto = "TCP"
+                                elif proto == 17 or proto == "17":
+                                    proto = "UDP"
+
+                                event = {
+                                    "id": f"flow-unk-{msg.offset}",
+                                    "timestamp": now_str,
+                                    "src": src_ip,
+                                    "dst": dst_ip,
+                                    "proto": proto,
+                                    "prediction": f"NOVEL / {pred}",
+                                    "confidence": round(conf, 1),
+                                    "route": "KAN_UNKNOWN_DETECTION",
+                                    "top_shap_feature": "Low Confidence (Routed to KAN)",
+                                    "top_shap_val": 0.0,
+                                    "status": "ANOMALY"
+                                }
+                                RECENT_EVENTS.appendleft(event)
 
                             elif topic == "alerts":
                                 err = float(val.get("reconstruction_error", val.get("error", 0.025)))
