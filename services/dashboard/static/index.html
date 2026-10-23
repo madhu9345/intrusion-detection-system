@@ -213,6 +213,7 @@
                                         <th>Confidence</th>
                                         <th>Top SHAP Driver</th>
                                         <th>Route</th>
+                                        <th>AI Reasoner</th>
                                     </tr>
                                 </thead>
                                 <tbody id="eventTableBody">
@@ -461,6 +462,25 @@
             </div>
             <div class="modal-body" id="modalStageBody">
                 <!-- Dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DIALOG FOR AI ZERO-DAY & LATENT ANOMALY TRANSLATION (NOVELTY HOOK 2) -->
+    <div class="modal-backdrop" id="aiExplainerModal">
+        <div class="modal-content modal-ai-explainer">
+            <button class="modal-close" onclick="closeAIModal()">&times;</button>
+            <div class="modal-header">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; width: 100%;">
+                    <div>
+                        <span class="stage-tag" id="aiModalTag">🧠 KAN-CVAE ZERO-DAY LATENT TRANSLATION</span>
+                        <h3 id="aiModalTitle" style="color: #fff; margin-top: 0.25rem;">Novel Exploit Analysis</h3>
+                    </div>
+                    <span id="aiModalSeverity" class="badge-danger" style="font-size: 0.8rem; padding: 0.35rem 0.8rem;">CRITICAL</span>
+                </div>
+            </div>
+            <div class="modal-body" id="aiModalBody">
+                <!-- Dynamically populated by app.js -->
             </div>
         </div>
     </div>

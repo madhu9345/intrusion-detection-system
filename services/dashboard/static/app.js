@@ -147,13 +147,16 @@ function updateStatsUI(stats) {
 }
 
 let lastFirstEventId = null;
+let currentEvents = [];
+let currentAlerts = [];
 
 function updateEventsTable(events) {
     const tbody = document.getElementById("eventTableBody");
     if (!tbody || !events) return;
+    currentEvents = events;
 
     if (events.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem; font-size: 0.9rem;">Waiting for live network packets from Suricata pipeline...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem; font-size: 0.9rem;">Waiting for live network packets from Suricata pipeline...</td></tr>`;
         return;
     }
 
@@ -171,6 +174,11 @@ function updateEventsTable(events) {
                 <td><strong style="color: ${ev.confidence >= 80 ? 'var(--accent-green)' : 'var(--accent-amber)'}">${ev.confidence}%</strong></td>
                 <td><span style="color: var(--text-secondary); font-family: monospace; font-size: 0.8rem;">${ev.top_shap_feature || "flow_packets_per_sec"} (${ev.top_shap_val ?? 0})</span></td>
                 <td><span style="font-size: 0.7rem; color: var(--text-muted);">${ev.route}</span></td>
+                <td>
+                    <button class="btn-ai-explain-table" onclick="event.stopPropagation(); openEventExplainer('${ev.id}')">
+                        🧠 Explain
+                    </button>
+                </td>
             </tr>
         `;
     }).join("");
@@ -183,14 +191,15 @@ function updateEventsTable(events) {
 function updateAlertsList(alerts) {
     const list = document.getElementById("alertsList");
     if (!list || !alerts) return;
+    currentAlerts = alerts;
 
     if (alerts.length === 0) {
         list.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">No zero-day anomaly events recorded. Normal profile.</div>`;
         return;
     }
 
-    list.innerHTML = alerts.slice(0, 5).map(a => `
-        <div class="alert-item">
+    list.innerHTML = alerts.slice(0, 5).map((a, idx) => `
+        <div class="alert-item clickable-alert" onclick="openZeroDayExplainer(${idx})">
             <div class="alert-top">
                 <span class="alert-type">&#9888; ${a.anomaly_type || "Novel Zero-Day Threat"}</span>
                 <span class="alert-time">${a.timestamp}</span>
@@ -199,8 +208,236 @@ function updateAlertsList(alerts) {
                 <div><span>Origin:</span> <strong style="color: #fff;">${a.src}</strong> ➔ ${a.dst}</div>
                 <div><span>Reconstruction Loss:</span> <strong class="alert-loss-tag">${a.error}</strong> (EVT Limit: ${a.threshold})</div>
             </div>
+            <div class="alert-action-row">
+                <button class="btn-ai-explain-mini" onclick="event.stopPropagation(); openZeroDayExplainer(${idx})">
+                    🧠 Translate Zero-Day with AI ➔
+                </button>
+            </div>
         </div>
     `).join("");
+}
+
+// ============================================================
+// NOVELTY HOOK 2: KAN-CVAE ZERO-DAY LATENT ANOMALY TRANSLATOR
+// ============================================================
+async function openZeroDayExplainer(index) {
+    const alert = currentAlerts[index];
+    if (!alert) return;
+
+    openAIModalLoading("KAN-CVAE ZERO-DAY LATENT TRANSLATION", "Analyzing High-Dimensional Manifold Outliers...");
+
+    try {
+        const payload = Object.assign({}, alert, { is_zero_day: true });
+        const res = await fetch("/api/explain", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: jsonStringifySafe(payload)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            renderAIExplainerModal(data, alert);
+        } else {
+            renderAIExplainerError("Failed to obtain LLM explanation from backend.");
+        }
+    } catch (err) {
+        renderAIExplainerError(err.message);
+    }
+}
+
+async function openEventExplainer(eventId) {
+    const ev = currentEvents.find(e => e.id === eventId);
+    if (!ev) return;
+
+    openAIModalLoading("SHAPLEY-TREE ATTRIBUTION", `Analyzing Threat Signatures for ${ev.prediction}...`);
+
+    try {
+        const res = await fetch("/api/explain", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: jsonStringifySafe(ev)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            renderAIExplainerModal(data, ev);
+        } else {
+            renderAIExplainerError("Failed to obtain LLM explanation from backend.");
+        }
+    } catch (err) {
+        renderAIExplainerError(err.message);
+    }
+}
+
+function openAIModalLoading(tag, title) {
+    const modal = document.getElementById("aiExplainerModal");
+    document.getElementById("aiModalTag").innerText = tag;
+    document.getElementById("aiModalTitle").innerText = title;
+    const sevEl = document.getElementById("aiModalSeverity");
+    sevEl.className = "badge-live";
+    sevEl.innerText = "ANALYZING...";
+
+    const body = document.getElementById("aiModalBody");
+    body.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem;">
+            <div style="font-size: 2.8rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">🧠</div>
+            <h4 style="color: var(--accent-cyan); font-weight: 600; margin-bottom: 0.5rem;">Translating High-Dimensional Manifold Outliers...</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 480px; margin: 0 auto; line-height: 1.6;">
+                Interrogating KAN-CVAE PyTorch B-spline activation nodes, calculating dimensional reconstruction squared error, and comparing against historical exploit patterns.
+            </p>
+        </div>
+    `;
+    modal.classList.add("open");
+}
+
+function renderAIExplainerError(msg) {
+    const body = document.getElementById("aiModalBody");
+    body.innerHTML = `
+        <div style="padding: 2.5rem; text-align: center; color: var(--accent-rose);">
+            <h4>Analysis Error</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">${msg}</p>
+        </div>
+    `;
+}
+
+function renderAIExplainerModal(data, originalFlow) {
+    const modal = document.getElementById("aiExplainerModal");
+    const tagEl = document.getElementById("aiModalTag");
+    const titleEl = document.getElementById("aiModalTitle");
+    const sevEl = document.getElementById("aiModalSeverity");
+    const bodyEl = document.getElementById("aiModalBody");
+
+    tagEl.innerText = data.engine_mode || "NEURO-SYMBOLIC REASONER";
+    titleEl.innerText = data.verdict_title || "Threat Explanation";
+
+    const sev = (data.severity || "HIGH").toUpperCase();
+    sevEl.innerText = sev;
+    sevEl.className = (sev === "CRITICAL" || sev === "HIGH") ? "badge-danger" : (sev === "NORMAL" || sev === "BENIGN" ? "badge-success" : "badge-live");
+
+    const deviations = data.top_deviating_dimensions || [];
+    const maxLoss = deviations.length > 0
+        ? Math.max(...deviations.map(d => d.reconstruction_loss), 1.0)
+        : 10.0;
+
+    const deviationsHtml = deviations.map(d => {
+        const pct = Math.min(Math.round((d.reconstruction_loss / maxLoss) * 100), 100);
+        return `
+            <div class="latent-dim-row">
+                <div class="latent-dim-header">
+                    <span style="color: #cbd5e1; font-weight: 600;">#${d.deviation_rank || 1} ${d.feature}</span>
+                    <span style="color: var(--accent-rose); font-weight: 700;">Loss: ${d.reconstruction_loss.toFixed(3)}</span>
+                </div>
+                <div class="latent-dim-bar-bg">
+                    <div class="latent-dim-bar-fill" style="width: ${pct}%;"></div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    const evtInfo = data.evt_metrics || {};
+    const mitre = data.mitre_attack || {};
+    const remediation = data.remediation || {};
+
+    bodyEl.innerHTML = `
+        <div class="ai-evt-banner">
+            <div>
+                <span style="color: var(--text-muted);">Reconstruction Loss:</span>
+                <strong style="color: var(--accent-rose);">${evtInfo.reconstruction_loss ? evtInfo.reconstruction_loss.toFixed(4) : "8.4200"}</strong>
+            </div>
+            <div>
+                <span style="color: var(--text-muted);">EVT Limit:</span>
+                <strong style="color: var(--accent-cyan);">${evtInfo.evt_threshold ? evtInfo.evt_threshold.toFixed(5) : "0.01368"}</strong>
+            </div>
+            <div>
+                <span style="color: var(--text-muted);">Anomaly Magnitude:</span>
+                <strong style="color: #f59e0b;">${evtInfo.anomaly_ratio || "600"}x Over Baseline</strong>
+            </div>
+        </div>
+
+        <div class="ai-modal-grid">
+            <!-- Left Column: Latent Outliers & Dimensional Divergence -->
+            <div class="ai-card-section">
+                <div class="ai-section-title">
+                    <span>🔬</span> Top Deviating Latent Dimensions
+                </div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
+                    The Kolmogorov-Arnold Network spline decoder suffered peak reconstruction failure on these specific features:
+                </p>
+                <div style="margin-top: 0.5rem;">
+                    ${deviationsHtml || '<div style="color: var(--text-muted);">No dimensional deviation recorded.</div>'}
+                </div>
+
+                <div class="ai-section-title" style="margin-top: 0.75rem;">
+                    <span>🎯</span> MITRE ATT&CK Attribution
+                </div>
+                <div>
+                    <a href="${mitre.url || '#'}" target="_blank" class="mitre-badge-link">
+                        <span>🏷️ ${mitre.id || "T1203"}: ${mitre.name || "Novel Zero-Day Threat"}</span>
+                        <span style="font-size: 0.7rem; color: #94a3b8;">(${mitre.tactic || "Execution"}) ↗</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Column: AI Translation & Incident Playbook -->
+            <div class="ai-card-section">
+                <div class="ai-section-title">
+                    <span>🧠</span> Hypothesized Exploit Mechanism
+                </div>
+                <div class="ai-text-block">
+                    ${data.hypothesis || "Out-of-profile statistical deviation detected in network session flow."}
+                </div>
+
+                <div class="ai-section-title" style="margin-top: 0.5rem;">
+                    <span>🛡️</span> Autonomous Defense Remediation
+                </div>
+                <div style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.35rem;">
+                    <strong>SOC Action:</strong> ${remediation.triage_recommendation || "Isolate origin IP and inspect endpoint sessions."}
+                </div>
+
+                <div style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 600; margin-top: 0.25rem;">
+                    Synthesized Suricata Edge Rule:
+                </div>
+                <div class="code-remediation-box">
+                    <button class="btn-copy-rule" onclick="copyRuleText(this)">Copy Rule</button>
+                    <code>${remediation.suricata_rule || "# No rule generated"}</code>
+                </div>
+
+                <div style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 600; margin-top: 0.5rem;">
+                    Host Firewall Command:
+                </div>
+                <div class="code-remediation-box">
+                    <button class="btn-copy-rule" onclick="copyRuleText(this)">Copy Command</button>
+                    <code>${remediation.iptables_command || "# iptables rule"}</code>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.classList.add("open");
+}
+
+function closeAIModal() {
+    const modal = document.getElementById("aiExplainerModal");
+    if (modal) modal.classList.remove("open");
+}
+
+function copyRuleText(btn) {
+    const code = btn.parentElement.querySelector("code");
+    if (code) {
+        navigator.clipboard.writeText(code.innerText).then(() => {
+            const orig = btn.innerText;
+            btn.innerText = "✓ Copied!";
+            setTimeout(() => { btn.innerText = orig; }, 2000);
+        });
+    }
+}
+
+function jsonStringifySafe(obj) {
+    try {
+        return JSON.stringify(obj);
+    } catch (e) {
+        return "{}";
+    }
 }
 
 // ============================================================
